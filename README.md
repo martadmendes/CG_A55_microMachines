@@ -1,4 +1,4 @@
-# heatSim
+# microMachines
 
 |   Number   |          Name           |            Email              |   Name GitHub  |
 | ---------- | ----------------------- | ----------------------------- | -------------- |
