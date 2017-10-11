@@ -91,7 +91,13 @@ function addCar(obj, x, y, z) {
 function createCamera() {
     'use strict';
 
-    camera = new THREE.OrthographicCamera(window.innerWidth / -10, window.innerWidth / 10, window.innerHeight / 10, window.innerHeight / -10, -200, 500);
+    var camera_height = 90;
+    var camera_width = 160;
+    var aspect_ratio = window.innerWidth / window.innerHeight;
+
+    camera = new THREE.OrthographicCamera(-aspect_ratio * camera_height / 2,
+        aspect_ratio * camera_height / 2, camera_height / 2,
+        -camera_height / 2, -200, 500);
 
     camera.position.x = 0;
     camera.position.y = 10;
@@ -167,14 +173,24 @@ function newSpeed(acceleration, delta) {
 function onResize() {
     'use strict';
 
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    var camera_height = 90;
+    var camera_width = 160;
+    var aspect_ratio = window.innerWidth / window.innerHeight;
 
-    if (window.innerWidth > 0 && window.innerHeight > 0) {
-        camera.aspect = renderer.getSize().width / renderer.getSize().height;
-        camera.updateProjectionMatrix();
+    if (aspect_ratio >= 1) {
+        camera.left   = -aspect_ratio * camera_height / 2;
+        camera.right  =  aspect_ratio * camera_height / 2;
+        camera.bottom = -camera_height / 2;
+        camera.top    =  camera_height / 2;
+    } else {
+        camera.left   = -camera_width / 2;
+        camera.right  =  camera_width / 2;
+        camera.bottom = -camera_width / (2 * aspect_ratio);
+        camera.top    =  camera_width / (2 * aspect_ratio);
     }
 
-    render();
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
 
