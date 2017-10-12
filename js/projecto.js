@@ -10,10 +10,17 @@ const clock = new THREE.Clock();
 function createTable(x, y, z) {
     'use strict';
 
+    var i;
     var table = new THREE.Object3D();
 
     addTableTop(table, 0, -10, 0);
     createTrack(table);
+
+    for(i=0; i < 5; i++)
+        addButter(table, (Math.random()*100)-50, y, (Math.random()*100)-50);
+
+    for(i=0; i < 3; i++)
+        addOrange(table, (Math.random()*100)-50, y, (Math.random()*100)-50);
 
     scene.add(table);
     table.position.x = x;
@@ -63,12 +70,17 @@ function createCar(x, y, z) {
     'use strict';
 
     car = new THREE.Object3D();
-    car.add(new THREE.AxisHelper(10));
+    //car.add(new THREE.AxisHelper(10));
     car.userData = {direction: new THREE.Vector3(0, 0, 0),
                     speed: 0,
                     stopping: false};
 
     addCar(car, 0, 2.5, 0);
+    addWheels(car, -2.5, 0, -1.75-0.5); //-2.5 - 0.5 pq e qd o carro acaba mais largura do toru
+    addWheels(car, -2.5, 0, 1.75+0.5);
+    addWheels(car, 2.5, 0, -1.75-0.5);
+    addWheels(car, 2.5, 0, 1.75+0.5);
+
     car.position.x = x;
     car.position.y = y;
     car.position.z = z;
@@ -80,11 +92,47 @@ function addCar(obj, x, y, z) {
   'use strict';
 
   var material = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
-  var geometry = new THREE.CubeGeometry(5, 5, 5);
+  var geometry = new THREE.CubeGeometry(5, 4, 3.5);
   var mesh = new THREE.Mesh(geometry, material);
 
   mesh.position.set(x, y, z);
   obj.add(mesh);
+}
+
+
+function addWheels(obj, x , y , z){
+	'use strict';
+
+	var material = new THREE.MeshBasicMaterial({ color: 0x6600ff });
+	var geometry = new THREE.TorusGeometry(1, 0.4, 100, 100);
+	var mesh = new THREE.Mesh(geometry, material);
+
+    mesh.position.set(x,y,z);
+	obj.add(mesh);
+}
+
+
+function addButter(obj, x, y ,z){
+	'use strict';
+
+    var material = new THREE.MeshBasicMaterial({ color: 0x3993F9 });
+    var geometry = new THREE.CubeGeometry(3, 1, 2);
+    var mesh = new THREE.Mesh(geometry, material);
+
+    mesh.position.set(x,y,z);
+    obj.add(mesh);
+}
+
+
+function addOrange(obj, x, y, z){
+	'use strict';
+
+	var geometry = new THREE.SphereGeometry(2, 32, 32 );
+	var material = new THREE.MeshBasicMaterial( {color: 0xDE8520} );
+	var sphere = new THREE.Mesh( geometry, material );
+
+    sphere.position.set(x,y,z);
+    obj.add(sphere);
 }
 
 
