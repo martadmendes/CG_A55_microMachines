@@ -17,10 +17,10 @@ function createTable(x, y, z) {
     createTrack(table);
 
     for(i=0; i < 5; i++)
-        addButter(table, (Math.random()*100)-50, y, (Math.random()*100)-50);
+        addButter(table, (Math.random()*100)-50, 0.5, (Math.random()*100)-50);
 
     for(i=0; i < 3; i++)
-        addOrange(table, (Math.random()*100)-50, y, (Math.random()*100)-50);
+        addOrange(table, (Math.random()*100)-50, 2, (Math.random()*100)-50);
 
     scene.add(table);
     table.position.x = x;
@@ -246,6 +246,14 @@ function onKeyDown(key) {
     'use strict';
 
     switch(key.keyCode) {
+        case 65:
+        case 97:
+            scene.traverse(function (node) {
+                if (node instanceof THREE.Mesh) {
+                    node.material.wireframe = !node.material.wireframe;
+                }
+             });
+             break;
         case 37: //left
             car.rotateY(Math.PI/25);
             break;
