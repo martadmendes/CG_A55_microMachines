@@ -1,4 +1,5 @@
-var camera, scene, renderer;
+var camera, ortho_camera, static_camera, car_camera;
+var scene, renderer;
 var xAxis = new THREE.Vector3(1,0,0);
 var yAxis = new THREE.Vector3(0,1,0);
 var zAxis = new THREE.Vector3(0,0,1);
@@ -80,6 +81,7 @@ function createCar(x, y, z) {
     addWheels(car, -2.5, 0, 1.75+0.5);
     addWheels(car, 2.5, 0, -1.75-0.5);
     addWheels(car, 2.5, 0, 1.75+0.5);
+    createCarCamera();
 
     car.position.x = x;
     car.position.y = y;
@@ -136,23 +138,68 @@ function addOrange(obj, x, y, z){
 }
 
 
-function createCamera() {
+function createOrthoCamera() {
     'use strict';
 
-    var camera_height = 90;
-    var camera_width = 160;
     var aspect_ratio = window.innerWidth / window.innerHeight;
+    var camera_height = 90;
+    var camera_width = 110;
+    var near = 1;
+    var far = 500;
+    var left, right, bottom, top;
 
-    camera = new THREE.OrthographicCamera(-aspect_ratio * camera_height / 2,
-        aspect_ratio * camera_height / 2, camera_height / 2,
-        -camera_height / 2, -200, 500);
+    if (aspect_ratio < 1) {
+        left = -camera_width / 2;
+        right = camera_width / 2;
+        bottom = -camera_width / (2*aspect_ratio);
+        top = camera_width / (2*aspect_ratio);
+    } else {
+        left = -aspect_ratio * camera_height / 2;
+        right = aspect_ratio * camera_height / 2;
+        bottom = - camera_height / 2;
+        top = camera_height / 2;
+    }
 
-    camera.position.x = 0;
-    camera.position.y = 10;
-    camera.position.z = 0;
-    camera.lookAt(scene.position);
+    var tmp_camera = new THREE.OrthographicCamera(left, right, top, bottom, near, far);
+
+    tmp_camera.position.x = 0;
+    tmp_camera.position.y = 10;
+    tmp_camera.position.z = 0;
+    tmp_camera.lookAt(scene.position);
+    return tmp_camera;
 }
 
+function createStaticCamera() {
+    'use strict';
+
+    var aspect_ratio = window.innerWidth / window.innerHeight;
+    var fov = 90;
+    var near = 1;
+    var far = 1000;
+
+    var tmp_camera = new THREE.PerspectiveCamera(fov, aspect_ratio, near, far);
+    tmp_camera.position.x = 0;
+    tmp_camera.position.y = 70;
+    tmp_camera.position.z = 100;
+    tmp_camera.lookAt(scene.position);
+    return tmp_camera;
+}
+
+function createCarCamera() {
+    'use strict';
+    
+    var aspect_ratio = window.innerWidth / window.innerHeight;
+    var fov = 90;
+    var near = 1;
+    var far = 100;
+
+    car_camera = new THREE.PerspectiveCamera(fov, aspect_ratio, near, far);
+    car_camera.position.x = -10;
+    car_camera.position.y = 10;
+    car_camera.position. z = 0;
+    car_camera.lookAt(car.position);
+    car.add(car_camera);
+}
 
 function createScene() {
     'use strict';
@@ -222,23 +269,28 @@ function onResize() {
     'use strict';
 
     var camera_height = 90;
-    var camera_width = 160;
+    var camera_width = 110;
     var aspect_ratio = window.innerWidth / window.innerHeight;
 
-    if (aspect_ratio >= 1) {
-        camera.left   = -aspect_ratio * camera_height / 2;
-        camera.right  =  aspect_ratio * camera_height / 2;
-        camera.bottom = -camera_height / 2;
-        camera.top    =  camera_height / 2;
-    } else {
-        camera.left   = -camera_width / 2;
-        camera.right  =  camera_width / 2;
-        camera.bottom = -camera_width / (2 * aspect_ratio);
-        camera.top    =  camera_width / (2 * aspect_ratio);
-    }
-
-    camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
+
+    if (camera === ortho_camera) {
+        if (aspect_ratio >= 1) {
+            camera.left   = -aspect_ratio * camera_height / 2;
+            camera.right  =  aspect_ratio * camera_height / 2;
+            camera.bottom = -camera_height / 2;
+            camera.top    =  camera_height / 2;
+        } else {
+            camera.left   = -camera_width / 2;
+            camera.right  =  camera_width / 2;
+            camera.bottom = -camera_width / (2 * aspect_ratio);
+            camera.top    =  camera_width / (2 * aspect_ratio);
+        }
+    } else {
+        camera.aspect = renderer.getSize().width / renderer.getSize().height;
+    }
+    
+    camera.updateProjectionMatrix();
 }
 
 
@@ -246,23 +298,35 @@ function onKeyDown(key) {
     'use strict';
 
     switch(key.keyCode) {
-        case 65:
-        case 97:
-            scene.traverse(function (node) {
-                if (node instanceof THREE.Mesh) {
-                    node.material.wireframe = !node.material.wireframe;
-                }
-             });
-             break;
-        case 37: //left
-            car.rotateY(Math.PI/25);
-            break;
+    case 49: // 1
+        camera = ortho_camera;
+        onResize();
+        break;
+    case 50: // 2
+        camera = static_camera;
+        onResize();
+        break;
+    case 51: // 3
+        camera = car_camera;
+        onResize();
+        break;
+    case 65: // A
+    case 97: // a
+        scene.traverse(function (node) {
+            if (node instanceof THREE.Mesh) {
+                node.material.wireframe = !node.material.wireframe;
+            }
+        });
+        break;
+    case 37: //left
+        car.rotateY(Math.PI/25);
+        break;
 
-        case 39: //right
-            car.rotateY(-Math.PI/25);
-            break;
+    case 39: //right
+        car.rotateY(-Math.PI/25);
+        break;
 
-        case 38: //up
+    case 38: //up
         if (car.userData.direction.x === -1 && car.userData.speed !== 0) {
             car.userData.stopping = true;
         } else if (car.userData.speed === 0) {
@@ -273,7 +337,7 @@ function onKeyDown(key) {
         }
         break;
 
-        case 40: //down
+    case 40: //down
         if (car.userData.direction.x === 1 && car.userData.speed !== 0) {
             car.userData.stopping = true;
         } else if (car.userData.speed === 0) {
@@ -315,7 +379,9 @@ function init() {
     document.body.appendChild(renderer.domElement);
 
     createScene();
-    createCamera();
+    ortho_camera = createOrthoCamera();
+    static_camera = createStaticCamera();
+    camera = ortho_camera;
 
     window.addEventListener("resize", onResize);
     window.addEventListener("keydown", onKeyDown);
