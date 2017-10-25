@@ -1,10 +1,12 @@
 var camera, ortho_camera, static_camera, car_camera;
 var scene, renderer;
-var xAxis = new THREE.Vector3(1,0,0);
-var yAxis = new THREE.Vector3(0,1,0);
-var zAxis = new THREE.Vector3(0,0,1);
 var car;
+var torus_array, butter_array, orange_array;
+var butter_num = 5;
+var orange_num = 3;
 var speed = 1;
+var camera_height = 100;
+var camera_width = 160;
 const clock = new THREE.Clock();
 
 
@@ -13,15 +15,18 @@ function createTable(x, y, z) {
 
     var i;
     var table = new THREE.Object3D();
+    torus_array = new Array(0);
+    butter_array = new Array(0);
+    orange_array = new Array(0);
 
     addTableTop(table, 0, -10, 0);
-    createTrack(table);
+    createTrack();
 
-    for(i=0; i < 5; i++)
-        addButter(table, (Math.random()*100)-50, 0.5, (Math.random()*100)-50);
+    for(i=0; i < butter_num; i++)
+        addButter((Math.random()*97)-48.5, 0.5, (Math.random()*98)-49);
 
-    for(i=0; i < 3; i++)
-        addOrange(table, (Math.random()*100)-50, 2, (Math.random()*100)-50);
+    for(i=0; i < orange_num; i++)
+        addOrange((Math.random()*98)-49, 2, (Math.random()*98)-49);
 
     scene.add(table);
     table.position.x = x;
@@ -42,28 +47,31 @@ function addTableTop(obj, x, y, z) {
 }
 
 
-function createTrack(obj) {
+function createTrack() {
     'use strict';
 
     for (var angle = 0; angle < 2*Math.PI; angle += Math.PI / 20) {
         if (angle % (Math.PI / 10) == 0)
-            addTorus(obj, 25*Math.cos(angle), 0.25, 25*Math.sin(angle));
+            addTorus(25*Math.cos(angle), 0.25, 25*Math.sin(angle));
 
-        addTorus(obj, 40*Math.cos(angle), 0.25, 40*Math.sin(angle));
+        addTorus(40*Math.cos(angle), 0.25, 40*Math.sin(angle));
     }
 }
 
 
-function addTorus(obj, x, y, z) {
+function addTorus(x, y, z) {
     'use strict';
 
+    var torus = new THREE.Object3D();
     var material = new THREE.MeshBasicMaterial({ color: 0xF9D639 });
     var geometry = new THREE.TorusGeometry(1, 0.5, 100, 100);
     var mesh = new THREE.Mesh(geometry, material);
 
     mesh.rotateX(Math.PI / 2);
-    mesh.position.set(x, y, z);
-    obj.add(mesh);
+    torus.add(mesh);
+    torus.position.set(x, y, z);
+    scene.add(torus);
+    torus_array.push(torus);
 }
 
 
@@ -114,27 +122,33 @@ function addWheels(obj, x , y , z){
 }
 
 
-function addButter(obj, x, y ,z){
+function addButter(x, y ,z){
 	'use strict';
 
+    var butter = new THREE.Object3D();
     var material = new THREE.MeshBasicMaterial({ color: 0x3993F9 });
     var geometry = new THREE.CubeGeometry(3, 1, 2);
     var mesh = new THREE.Mesh(geometry, material);
 
-    mesh.position.set(x,y,z);
-    obj.add(mesh);
+    butter.position.set(x,y,z);
+    butter.add(mesh);
+    scene.add(butter);
+    butter_array.push(butter);
 }
 
 
-function addOrange(obj, x, y, z){
+function addOrange(x, y, z){
 	'use strict';
 
+    var orange = new THREE.Object3D();
 	var geometry = new THREE.SphereGeometry(2, 32, 32 );
 	var material = new THREE.MeshBasicMaterial( {color: 0xDE8520} );
 	var sphere = new THREE.Mesh( geometry, material );
 
     sphere.position.set(x,y,z);
-    obj.add(sphere);
+    orange.add(sphere);
+    scene.add(orange);
+    orange_array.push(orange);
 }
 
 
@@ -142,8 +156,6 @@ function createOrthoCamera() {
     'use strict';
 
     var aspect_ratio = window.innerWidth / window.innerHeight;
-    var camera_height = 90;
-    var camera_width = 110;
     var near = 1;
     var far = 500;
     var left, right, bottom, top;
@@ -268,8 +280,6 @@ function newSpeed(acceleration, delta) {
 function onResize() {
     'use strict';
 
-    var camera_height = 90;
-    var camera_width = 110;
     var aspect_ratio = window.innerWidth / window.innerHeight;
 
     renderer.setSize(window.innerWidth, window.innerHeight);
