@@ -138,13 +138,22 @@ function addButter(x, y ,z){
 
 
 function addOrange(x, y, z){
-	'use strict';
+    'use strict';
 
     var orange = new THREE.Object3D();
+    orange.userData = {direction : new THREE.Vector3(Math.random()*2 -1, 0, Math.random()*2 -1),
+                        speed: Math.random()*0.1 + 0.001,
+                        timePassed: 0}
 	var geometry = new THREE.SphereGeometry(2, 32, 32 );
 	var material = new THREE.MeshBasicMaterial( {color: 0xDE8520} );
 	var sphere = new THREE.Mesh( geometry, material );
 
+    geometry = new THREE.CylinderGeometry(0.2, 0.2, 1, 20);
+    material = new THREE.MeshBasicMaterial( {color: 0x663300} );
+    var mesh = new THREE.Mesh(geometry, material);
+
+    mesh.position.set(x,y+2,z);
+    orange.add(mesh);
     sphere.position.set(x,y,z);
     orange.add(sphere);
     scene.add(orange);
@@ -229,6 +238,7 @@ function animate() {
     const acceleration   = 0.5;
     const delta = clock.getDelta();
     animateCar(acceleration, delta);
+    animateOrange(delta);
 
     render();
     requestAnimationFrame(animate);
@@ -244,13 +254,27 @@ function animateCar(acceleration, delta) {
     }
 }
 
+function animateOrange(delta){
+    'use strict'
+    
+    var i, orange;
+    for(i=0; i < orange_array.length;i++){
+        orange = orange_array[i];
+        orange.userData.timePassed += delta;
+        if( orange.userData.timePassed > 1){
+            orange.userData.speed = orange.userData.speed * 1.001;
+        }
+        getNewPosition(orange);
+    }
+}
 
-function getNewPosition() {
+
+function getNewPosition(obj) {
     'use strict';
 
-    var speed = car.userData.speed;
-    car.translateX(car.userData.direction.getComponent(0) * speed);
-    car.translateZ(car.userData.direction.getComponent(2) * speed);
+    var speed = obj.userData.speed;
+    obj.translateX(obj.userData.direction.getComponent(0) * speed);
+    obj.translateZ(obj.userData.direction.getComponent(2) * speed);
 }
 
 
