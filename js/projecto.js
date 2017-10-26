@@ -63,8 +63,8 @@ function addTorus(x, y, z) {
     'use strict';
 
     var torus = new THREE.Object3D();
-    var material = new THREE.MeshBasicMaterial({ color: 0xF9D639 });
-    var geometry = new THREE.TorusGeometry(1, 0.5, 100, 100);
+    var material = new THREE.MeshBasicMaterial({ color: 0xE9C40C });
+    var geometry = new THREE.TorusGeometry(1, 0.5, 15, 30);
     var mesh = new THREE.Mesh(geometry, material);
 
     mesh.rotateX(Math.PI / 2);
@@ -91,6 +91,7 @@ function createCar(x, y, z) {
     addWheels(car, 2.5, 0, 1.75+0.5);
     createCarCamera();
 
+    car.rotateY(Math.PI/2);
     car.position.x = x;
     car.position.y = y;
     car.position.z = z;
@@ -114,7 +115,7 @@ function addWheels(obj, x , y , z){
 	'use strict';
 
 	var material = new THREE.MeshBasicMaterial({ color: 0x6600ff });
-	var geometry = new THREE.TorusGeometry(1, 0.4, 100, 100);
+	var geometry = new THREE.TorusGeometry(1, 0.4, 15, 30);
 	var mesh = new THREE.Mesh(geometry, material);
 
     mesh.position.set(x,y,z);
@@ -126,7 +127,7 @@ function addButter(x, y ,z){
 	'use strict';
 
     var butter = new THREE.Object3D();
-    var material = new THREE.MeshBasicMaterial({ color: 0x3993F9 });
+    var material = new THREE.MeshBasicMaterial({ color: 0xFAFD62 });
     var geometry = new THREE.CubeGeometry(3, 1, 2);
     var mesh = new THREE.Mesh(geometry, material);
 
@@ -144,7 +145,7 @@ function addOrange(x, y, z){
     orange.userData = {direction : new THREE.Vector3(Math.random()*2 -1, 0, Math.random()*2 -1),
                         speed: Math.random()*0.1 + 0.001,
                         timePassed: 0}
-	var geometry = new THREE.SphereGeometry(2, 32, 32 );
+	var geometry = new THREE.SphereGeometry(2, 20, 20);
 	var material = new THREE.MeshBasicMaterial( {color: 0xDE8520} );
 	var sphere = new THREE.Mesh( geometry, material );
 
@@ -228,7 +229,7 @@ function createScene() {
     scene = new THREE.Scene();
 
     createTable(0, 0, 0);
-    createCar(0, 0, 0);
+    createCar(-32, 0, 0);
 }
 
 
