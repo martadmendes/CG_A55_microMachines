@@ -474,6 +474,8 @@ function validPosition(obj) { //checks if obj collided with another object or th
                 //carro vai para a posicao inicial
                 obj.position.set(-32, 0, 0);
                 obj.userData.speed = 0;
+                obj.rotation.y = Math.PI / 2;
+                obj.userData.direction = new THREE.Vector3(0, 0, 0);
             }
 
         }
@@ -481,8 +483,10 @@ function validPosition(obj) { //checks if obj collided with another object or th
             butter = butter_array[i];
             if (checkCollision(obj, butter)) {
                 //carro para de se mexer completamente
-                obj.userData.stopping = true;
-                obj.userData.speed = 0;
+                if (obj.userData.speed > 0) {
+                    obj.userData.stopping = true;
+                    obj.userData.speed = 0;
+                }
             }
         }
     }
