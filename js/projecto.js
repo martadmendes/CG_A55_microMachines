@@ -99,6 +99,8 @@ function createCar(x, y, z) {
     car.name = "Car";
     car.userData = {direction: new THREE.Vector3(0, 0, 0),
                     speed: 0,
+                    left: false,
+                    right: false,
                     stopping: false};
 
     addCar(car, 0, 2.5, 0);
@@ -316,6 +318,11 @@ function animateCar(acceleration, delta) {
     if (car.userData.direction.x !== 0) {
         newSpeed(acceleration, delta);
         getNewPosition(car);
+    }
+    if (car.userData.left) {
+        car.rotateY(Math.PI / 40);
+    } else if (car.userData.right) {
+        car.rotateY(-Math.PI / 40);
     }
 }
 
@@ -549,11 +556,13 @@ function onKeyDown(key) {
         });
         break;
     case 37: //left
-        car.rotateY(Math.PI/25);
+        car.userData.right = false;
+        car.userData.left = true;
         break;
 
     case 39: //right
-        car.rotateY(-Math.PI/25);
+        car.userData.left = false;
+        car.userData.right = true;
         break;
 
     case 38: //up
@@ -595,6 +604,14 @@ function onKeyUp (key){
         if (car.userData.direction.x === -1 && !car.userData.stopping) {
             car.userData.stopping = true;
         }
+        break;
+
+    case 37: //left
+        car.userData.left = false;
+        break;
+
+    case 39: //right
+        car.userData.right = false;
         break;
     }
 }
