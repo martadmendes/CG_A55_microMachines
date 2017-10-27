@@ -175,9 +175,10 @@ function addButter(x, y ,z){
 function addOrange(x, y, z){
     'use strict';
 
+    var vector = new THREE.Vector3(Math.random()*2 -1, 0, Math.random()*2 -1);
     var orange = new THREE.Object3D();
     orange.name = "Orange";
-    orange.userData = {direction : new THREE.Vector3(Math.random()*2 -1, 0, Math.random()*2 -1),
+    orange.userData = {direction : vector.normalize(),
                         speed: Math.random()*0.1 + 0.001,
                         timePassed: 0}
 	var geometry = new THREE.SphereGeometry(2, 20, 20);
@@ -324,13 +325,14 @@ function animateOrange(delta){
     var i, x, z, orange;
     var min = -50;
     var max = 50;
-    for(i=0; i < orange_array.length;i++){
+    for(i=0; i < orange_array.length; i++){
         orange = orange_array[i];
         orange.userData.timePassed += delta;
         if( orange.userData.timePassed > 1){
             orange.userData.speed = orange.userData.speed * 1.01;
         }
-        getNewPosition(orange);
+        getNewPosition(orange
+        );
         x = orange.getWorldPosition().x;
         z = orange.getWorldPosition().z;
         if (x >= max || x <= min || z >= max || z <= min){
@@ -422,7 +424,8 @@ function newSpeed(acceleration, delta) {
 
 function validPosition(obj) { //checks if obj collided with another object or the map limits
     "use strict";
-    var i;
+    var i, x, z;
+    var vector;
     var torus;
     var orange;
     var butter;
@@ -435,8 +438,12 @@ function validPosition(obj) { //checks if obj collided with another object or th
             if (checkCollision(obj, torus)) {
                 //Transferir velocidade entre ambos
                 if (obj.userData.speed > 0) {
-                    torus.userData.speed = obj.userData.speed;
-                    torus.userData.direction = obj.userData.direction;
+                    x = torus.getWorldPosition().x - obj.getWorldPosition().x;
+                    z = torus.getWorldPosition().z - obj.getWorldPosition().z;
+                    vector = new THREE.Vector3(x, 0, z);
+                    torus.userData.speed = obj.userData.speed/2;
+                    obj.userData.speed = obj.userData.speed / 2;
+                    torus.userData.direction = vector.normalize();
                 }
             }
         }
@@ -447,12 +454,11 @@ function validPosition(obj) { //checks if obj collided with another object or th
             if (checkCollision(obj, torus)){
                 //transferir velocidade etc
                 if (obj.userData.speed > 0){
+                    x = torus.getWorldPosition().x - obj.getWorldPosition().x;
+                    z = torus.getWorldPosition().z - obj.getWorldPosition().z;
+                    vector = new THREE.Vector3(x, 0, z);
                     torus.userData.speed = obj.userData.speed;
-                    torus.userData.direction.setX(obj.userData.direction.getComponent(0));
-                    torus.userData.direction.setZ(obj.userData.direction.getComponent(2));
-                // } else {
-                //     torus.userData.direction.negate();
-                //     torus.userData.speed = 0;
+                    torus.userData.direction = vector.normalize();
                 }
             }
         }
@@ -469,8 +475,6 @@ function validPosition(obj) { //checks if obj collided with another object or th
             butter = butter_array[i];
             if (checkCollision(obj, butter)) {
                 //carro para de se mexer completamente
-                //obj.userData.stopping = true;
-                //obj.userData.direction.negate();
                 obj.userData.speed = 0;
             }
         }
