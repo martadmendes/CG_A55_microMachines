@@ -338,8 +338,7 @@ function animateOrange(delta){
         if( orange.userData.timePassed > 1){
             orange.userData.speed = orange.userData.speed * 1.01;
         }
-        getNewPosition(orange
-        );
+        getNewPosition(orange);
         x = orange.getWorldPosition().x;
         z = orange.getWorldPosition().z;
         if (x >= max || x <= min || z >= max || z <= min){
@@ -482,6 +481,7 @@ function validPosition(obj) { //checks if obj collided with another object or th
             butter = butter_array[i];
             if (checkCollision(obj, butter)) {
                 //carro para de se mexer completamente
+                obj.userData.stopping = true;
                 obj.userData.speed = 0;
             }
         }
