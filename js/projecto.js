@@ -153,10 +153,11 @@ function addOrange(x, y, z){
     material = new THREE.MeshBasicMaterial( {color: 0x663300} );
     var mesh = new THREE.Mesh(geometry, material);
 
-    mesh.position.set(x,y+2,z);
+    mesh.position.set(0,2,0);
     orange.add(mesh);
-    sphere.position.set(x,y,z);
+    sphere.position.set(0,0,0);
     orange.add(sphere);
+    orange.position.set(x,y,z);
     scene.add(orange);
     orange_array.push(orange);
 }
@@ -257,15 +258,26 @@ function animateCar(acceleration, delta) {
 
 function animateOrange(delta){
     'use strict'
-    
-    var i, orange;
+
+    var i, x, z, orange;
+    var min = -50;
+    var max = 50;
     for(i=0; i < orange_array.length;i++){
         orange = orange_array[i];
         orange.userData.timePassed += delta;
         if( orange.userData.timePassed > 1){
-            orange.userData.speed = orange.userData.speed * 1.001;
+            orange.userData.speed = orange.userData.speed * 1.01;
         }
         getNewPosition(orange);
+        x = orange.getWorldPosition().x;
+        z = orange.getWorldPosition().z;
+        if (x >= max || x <= min || z >= max || z <= min){
+            scene.remove(orange);
+            orange_array.splice(i,1);
+            setTimeout(timerOrange, Math.random()*5000 );
+            i++;    
+        }
+        getNewRotation(orange);
     }
 }
 
@@ -278,6 +290,23 @@ function getNewPosition(obj) {
     obj.translateZ(obj.userData.direction.getComponent(2) * speed);
 }
 
+function getNewRotation(obj){
+    'use strict'
+    
+    var speed = obj.userData.speed;
+    var distanceX = obj.userData.direction.getComponent(0) * speed;
+    var angleX = distanceX / (Math.PI * 2) * Math.PI;
+    obj.rotateX(angleX);
+    var distanceZ = obj.userData.direction.getComponent(2) * speed;
+    var angleZ = distanceZ / (Math.PI * 2) * Math.PI;
+    obj.rotateZ(angleZ);
+}
+
+function timerOrange(){
+    'use strict'
+    
+    addOrange((Math.random()*98)-49, 2, (Math.random()*98)-49);
+}
 
 function newSpeed(acceleration, delta) {
     'use strict';
