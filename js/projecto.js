@@ -301,17 +301,18 @@ function animate() {
     requestAnimationFrame(animate);
 
     validPosition(car);
-    // for (i=0; i<torus_array.length; i++){
-    //     torus = torus_array[i];
-    //     validPosition(torus);
-    // }
+    for (i=0; i<torus_array.length; i++){
+        torus = torus_array[i];
+        validPosition(torus);
+    }
+
 }
 
 
 function animateCar(acceleration, delta) {
     'use strict';
 
-    if(car.userData.direction.x !== 0) {
+    if (car.userData.direction.x !== 0) {
         newSpeed(acceleration, delta);
         getNewPosition(car);
     }
@@ -346,20 +347,20 @@ function animateTorus(acceleration, delta) {
     'use strict';
     var i;
     var torus;
-    var new_speed;
+    var new_torus_speed;
     for (i=0; i<torus_array.length; i++) {
         torus = torus_array[i];
         if (torus.userData.speed == 0)
             continue;
 
-        new_speed = torus.userData.speed - acceleration * delta;
+        new_torus_speed = torus.userData.speed - acceleration * delta;
 
-        if(new_speed < 0) {
+        if(new_torus_speed < 0) {
             torus.userData.speed = 0;
             torus.userData.direction.setX(0);
             torus.userData.direction.setZ(0);
         } else
-            torus.userData.speed = new_speed;
+            torus.userData.speed = new_torus_speed;
 
         getNewPosition(torus);
     }
@@ -441,20 +442,21 @@ function validPosition(obj) { //checks if obj collided with another object or th
         }
 
     } else if (obj.name === "Car") {
-        for (i=0; i<torus_array.length; i++){
+        for (i=0; i<torus_array.length; i++) {
             torus = torus_array[i];
             if (checkCollision(obj, torus)){
                 //transferir velocidade etc
                 if (obj.userData.speed > 0){
                     torus.userData.speed = obj.userData.speed;
-                    torus.userData.direction = obj.userData.direction;
+                    torus.userData.direction.setX(obj.userData.direction.getComponent(0));
+                    torus.userData.direction.setZ(obj.userData.direction.getComponent(2));
                 // } else {
                 //     torus.userData.direction.negate();
                 //     torus.userData.speed = 0;
                 }
             }
         }
-        for (i=0; i<orange_array.length; i++){
+        for (i=0; i<orange_array.length; i++) {
             orange = orange_array[i];
             if (checkCollision(obj, orange)){
                 //carro vai para a posicao inicial
@@ -463,7 +465,7 @@ function validPosition(obj) { //checks if obj collided with another object or th
             }
 
         }
-        for (i=0; i<butter_array.length; i++){
+        for (i=0; i<butter_array.length; i++) {
             butter = butter_array[i];
             if (checkCollision(obj, butter)) {
                 //carro para de se mexer completamente
