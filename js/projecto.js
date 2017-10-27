@@ -69,8 +69,7 @@ function addTorus(x, y, z) {
     var torus = new THREE.Object3D();
     torus.name = "Torus";
     torus.userData = {direction: new THREE.Vector3(0, 0, 0),
-                      speed: 0,
-                      stopping: false};
+                      speed: 0};
     var material = new THREE.MeshBasicMaterial({ color: 0xE9C40C });
     var geometry = new THREE.TorusGeometry(1, 0.5, 15, 30);
     var mesh = new THREE.Mesh(geometry, material);
@@ -80,10 +79,10 @@ function addTorus(x, y, z) {
     torus.position.set(x, y, z);
 
     //bounding sphere
+    material = new THREE.MeshBasicMaterial( {visible: false} );
     var bounding_sphere = new THREE.Mesh(new THREE.SphereGeometry(1.25, 15, 15), material);
     bounding_sphere.name = "Bounding Sphere";
     bounding_sphere.position.set(0,0,0);
-    bounding_sphere.visible = true;
     torus.add(bounding_sphere);
 
     torus_array.push(torus);
@@ -130,10 +129,10 @@ function addCar(obj, x, y, z) {
   obj.add(mesh);
 
   //bounding sphere
-  var sphere  = new THREE.Mesh(new THREE.SphereGeometry(4.3, 20, 20), material);
+  material = new THREE.MeshBasicMaterial( {visible: false} );
+  var sphere  = new THREE.Mesh(new THREE.SphereGeometry(2.5, 20, 20), material);
   sphere.name = "Bounding Sphere";
   sphere.position.set(x, y, z);
-  sphere.visible = true;
   obj.add(sphere);
 }
 
@@ -162,10 +161,10 @@ function addButter(x, y ,z){
     butter.add(mesh);
 
     //bounding sphere
+    material = new THREE.MeshBasicMaterial( {visible: false} );
     var bounding_sphere = new THREE.Mesh(new THREE.SphereGeometry(1.803, 20, 20), material);
     bounding_sphere.name = "Bounding Sphere";
     bounding_sphere.position.set(0,0,0);
-    bounding_sphere.visible = true;
     butter.add(bounding_sphere);
 
     scene.add(butter);
@@ -195,10 +194,10 @@ function addOrange(x, y, z){
     orange.add(mesh);
 
     //bounding sphere
+    material = new THREE.MeshBasicMaterial( {visible: false} );
     var bounding_sphere = new THREE.Mesh(new THREE.SphereGeometry(2, 20, 20), material);
     bounding_sphere.name = "Bounding Sphere";
     bounding_sphere.position.set(0, 0, 0);
-    bounding_sphere.visible = true;
     orange.add(bounding_sphere);
 
     orange_array.push(orange);
@@ -295,6 +294,7 @@ function animate() {
     const acceleration   = 0.5;
     const delta = clock.getDelta();
     animateCar(acceleration, delta);
+    animateTorus(acceleration, delta);
     animateOrange(delta);
 
     render();
@@ -318,7 +318,7 @@ function animateCar(acceleration, delta) {
 }
 
 function animateOrange(delta){
-    'use strict'
+    'use strict';
 
     var i, x, z, orange;
     var min = -50;
@@ -339,6 +339,29 @@ function animateOrange(delta){
             i++;
         }
         getNewRotation(orange);
+    }
+}
+
+function animateTorus(acceleration, delta) {
+    'use strict';
+    var i;
+    var torus;
+    var new_speed;
+    for (i=0; i<torus_array.length; i++) {
+        torus = torus_array[i];
+        if (torus.userData.speed == 0)
+            continue;
+
+        new_speed = torus.userData.speed - acceleration * delta;
+
+        if(new_speed < 0) {
+            torus.userData.speed = 0;
+            torus.userData.direction.setX(0);
+            torus.userData.direction.setZ(0);
+        } else
+            torus.userData.speed = new_speed;
+
+        getNewPosition(torus);
     }
 }
 
@@ -408,21 +431,32 @@ function validPosition(obj) { //checks if obj collided with another object or th
             if (torus === obj)
                 continue;
 
-            //if checkCollision(obj, torus)
+            if (checkCollision(obj, torus)) {
                 //Transferir velocidade entre ambos
+                if (obj.userData.speed > 0) {
+                    torus.userData.speed = obj.userData.speed;
+                    torus.userData.direction = obj.userData.direction;
+                }
+            }
         }
 
     } else if (obj.name === "Car") {
         for (i=0; i<torus_array.length; i++){
             torus = torus_array[i];
-            if checkCollision(obj, torus)
+            if (checkCollision(obj, torus)){
                 //transferir velocidade etc
+                if (obj.userData.speed > 0){
+                    torus.userData.speed = obj.userData.speed;
+                    torus.userData.direction = obj.userData.direction;
+                // } else {
+                //     torus.userData.direction.negate();
+                //     torus.userData.speed = 0;
+                }
+            }
         }
         for (i=0; i<orange_array.length; i++){
             orange = orange_array[i];
-            console.log("sup");
             if (checkCollision(obj, orange)){
-                console.log("sup");
                 //carro vai para a posicao inicial
                 obj.position.set(-32, 0, 0);
                 obj.userData.speed = 0;
