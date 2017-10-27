@@ -10,6 +10,10 @@ var camera_width = 160;
 const clock = new THREE.Clock();
 
 
+/*
+ * scene creation
+ */
+
 function createTable(x, y, z) {
     'use strict';
 
@@ -63,6 +67,10 @@ function addTorus(x, y, z) {
     'use strict';
 
     var torus = new THREE.Object3D();
+    torus.name = "Torus";
+    torus.userData = {direction: new THREE.Vector3(0, 0, 0),
+                      speed: 0,
+                      stopping: false};
     var material = new THREE.MeshBasicMaterial({ color: 0xE9C40C });
     var geometry = new THREE.TorusGeometry(1, 0.5, 15, 30);
     var mesh = new THREE.Mesh(geometry, material);
@@ -70,8 +78,17 @@ function addTorus(x, y, z) {
     mesh.rotateX(Math.PI / 2);
     torus.add(mesh);
     torus.position.set(x, y, z);
-    scene.add(torus);
+
+    //bounding sphere
+    var bounding_sphere = new THREE.Mesh(new THREE.SphereGeometry(1.25, 15, 15), material);
+    bounding_sphere.name = "Bounding Sphere";
+    bounding_sphere.position.set(0,0,0);
+    bounding_sphere.visible = true;
+    torus.add(bounding_sphere);
+
     torus_array.push(torus);
+
+    scene.add(torus);
 }
 
 
@@ -80,6 +97,7 @@ function createCar(x, y, z) {
 
     car = new THREE.Object3D();
     //car.add(new THREE.AxisHelper(10));
+    car.name = "Car";
     car.userData = {direction: new THREE.Vector3(0, 0, 0),
                     speed: 0,
                     stopping: false};
@@ -89,12 +107,14 @@ function createCar(x, y, z) {
     addWheels(car, -2.5, 0, 1.75+0.5);
     addWheels(car, 2.5, 0, -1.75-0.5);
     addWheels(car, 2.5, 0, 1.75+0.5);
+
     createCarCamera();
 
     car.rotateY(Math.PI/2);
     car.position.x = x;
     car.position.y = y;
     car.position.z = z;
+
     scene.add(car);
 }
 
@@ -108,6 +128,13 @@ function addCar(obj, x, y, z) {
 
   mesh.position.set(x, y, z);
   obj.add(mesh);
+
+  //bounding sphere
+  var sphere  = new THREE.Mesh(new THREE.SphereGeometry(4.3, 20, 20), material);
+  sphere.name = "Bounding Sphere";
+  sphere.position.set(x, y, z);
+  sphere.visible = true;
+  obj.add(sphere);
 }
 
 
@@ -133,6 +160,14 @@ function addButter(x, y ,z){
 
     butter.position.set(x,y,z);
     butter.add(mesh);
+
+    //bounding sphere
+    var bounding_sphere = new THREE.Mesh(new THREE.SphereGeometry(1.803, 20, 20), material);
+    bounding_sphere.name = "Bounding Sphere";
+    bounding_sphere.position.set(0,0,0);
+    bounding_sphere.visible = true;
+    butter.add(bounding_sphere);
+
     scene.add(butter);
     butter_array.push(butter);
 }
@@ -142,26 +177,40 @@ function addOrange(x, y, z){
     'use strict';
 
     var orange = new THREE.Object3D();
+    orange.name = "Orange";
     orange.userData = {direction : new THREE.Vector3(Math.random()*2 -1, 0, Math.random()*2 -1),
                         speed: Math.random()*0.1 + 0.001,
                         timePassed: 0}
 	var geometry = new THREE.SphereGeometry(2, 20, 20);
 	var material = new THREE.MeshBasicMaterial( {color: 0xDE8520} );
 	var sphere = new THREE.Mesh( geometry, material );
+    sphere.position.set(0,0,0);
+    orange.add(sphere);
+
 
     geometry = new THREE.CylinderGeometry(0.2, 0.2, 1, 20);
     material = new THREE.MeshBasicMaterial( {color: 0x663300} );
     var mesh = new THREE.Mesh(geometry, material);
-
     mesh.position.set(0,2,0);
     orange.add(mesh);
-    sphere.position.set(0,0,0);
-    orange.add(sphere);
+
+    //bounding sphere
+    var bounding_sphere = new THREE.Mesh(new THREE.SphereGeometry(2, 20, 20), material);
+    bounding_sphere.name = "Bounding Sphere";
+    bounding_sphere.position.set(0, 0, 0);
+    bounding_sphere.visible = true;
+    orange.add(bounding_sphere);
+
+    orange_array.push(orange);
+
     orange.position.set(x,y,z);
     scene.add(orange);
-    orange_array.push(orange);
 }
 
+
+/*
+ * cameras
+ */
 
 function createOrthoCamera() {
     'use strict';
@@ -210,7 +259,7 @@ function createStaticCamera() {
 
 function createCarCamera() {
     'use strict';
-    
+
     var aspect_ratio = window.innerWidth / window.innerHeight;
     var fov = 90;
     var near = 1;
@@ -234,9 +283,15 @@ function createScene() {
 }
 
 
+/*
+ * animating the board and its elements
+ */
+
 function animate() {
     'use strict';
 
+    var i;
+    var torus;
     const acceleration   = 0.5;
     const delta = clock.getDelta();
     animateCar(acceleration, delta);
@@ -244,6 +299,12 @@ function animate() {
 
     render();
     requestAnimationFrame(animate);
+
+    validPosition(car);
+    // for (i=0; i<torus_array.length; i++){
+    //     torus = torus_array[i];
+    //     validPosition(torus);
+    // }
 }
 
 
@@ -275,7 +336,7 @@ function animateOrange(delta){
             scene.remove(orange);
             orange_array.splice(i,1);
             setTimeout(timerOrange, Math.random()*5000 );
-            i++;    
+            i++;
         }
         getNewRotation(orange);
     }
@@ -292,7 +353,7 @@ function getNewPosition(obj) {
 
 function getNewRotation(obj){
     'use strict'
-    
+
     var speed = obj.userData.speed;
     var distanceX = obj.userData.direction.getComponent(0) * speed;
     var angleX = distanceX / (Math.PI * 2) * Math.PI;
@@ -304,7 +365,7 @@ function getNewRotation(obj){
 
 function timerOrange(){
     'use strict'
-    
+
     addOrange((Math.random()*98)-49, 2, (Math.random()*98)-49);
 }
 
@@ -331,6 +392,71 @@ function newSpeed(acceleration, delta) {
 }
 
 
+/*
+ * collision checking and handling
+ */
+
+function validPosition(obj) { //checks if obj collided with another object or the map limits
+    "use strict";
+    var i;
+    var torus;
+    var orange;
+    var butter;
+    if (obj.name === "Torus") {
+        for (i=0; i<torus_array.length; i++){
+            torus = torus_array[i]
+            if (torus === obj)
+                continue;
+
+            //if checkCollision(obj, torus)
+                //Transferir velocidade entre ambos
+        }
+
+    } else if (obj.name === "Car") {
+        for (i=0; i<torus_array.length; i++){
+            torus = torus_array[i];
+            if checkCollision(obj, torus)
+                //transferir velocidade etc
+        }
+        for (i=0; i<orange_array.length; i++){
+            orange = orange_array[i];
+            console.log("sup");
+            if (checkCollision(obj, orange)){
+                console.log("sup");
+                //carro vai para a posicao inicial
+                obj.position.set(-32, 0, 0);
+                obj.userData.speed = 0;
+            }
+
+        }
+        for (i=0; i<butter_array.length; i++){
+            butter = butter_array[i];
+            if (checkCollision(obj, butter)) {
+                //carro para de se mexer completamente
+                //obj.userData.stopping = true;
+                //obj.userData.direction.negate();
+                obj.userData.speed = 0;
+            }
+        }
+    }
+
+}
+
+
+function checkCollision(obj1, obj2) { //aux to actually calculate if a collision happened
+    //"use strict";
+    var r1 = obj1.getObjectByName("Bounding Sphere").geometry.boundingSphere.radius;
+    var r2 = obj2.getObjectByName("Bounding Sphere").geometry.boundingSphere.radius;
+    var distance = obj1.getWorldPosition().distanceTo(obj2.getWorldPosition());
+    return (r1 + r2) * (r1 + r2) >= distance * distance;
+}
+
+
+
+/*
+ * Event handling for window resize and key presses
+ */
+
 function onResize() {
     'use strict';
 
@@ -353,7 +479,7 @@ function onResize() {
     } else {
         camera.aspect = renderer.getSize().width / renderer.getSize().height;
     }
-    
+
     camera.updateProjectionMatrix();
 }
 
