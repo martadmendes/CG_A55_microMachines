@@ -559,7 +559,9 @@ function onKeyUp (key){
     }
 }
 
-
+/*
+ * initialize the map
+ */
 function init() {
     'use strict';
 
@@ -578,7 +580,10 @@ function init() {
     window.addEventListener("keyup", onKeyUp);
 }
 
-
+/*
+ * drawing the elements on screen.
+ * animate() calls it according to the update/display cycle
+ */
 function render() {
     'use strict';
 
