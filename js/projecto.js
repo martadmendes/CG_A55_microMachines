@@ -596,8 +596,8 @@ function onKeyDown(key) {
         });
         break;
 
-    case 71: //G
-    case 103: //g
+    case 67: //C
+    case 99: //c
         plight_flag = !plight_flag;
         break;
 
