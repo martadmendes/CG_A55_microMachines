@@ -275,6 +275,21 @@ function createCarCamera() {
     car.add(car_camera);
 }
 
+function addSpotlight(x,y,z) {
+    scene.add( new THREE.AmbientLight( 0x00020 ) );
+    var plight = new THREE.PointLight(0xFFB266, 0.3, 100, 2);
+    var sphere = new THREE.SphereGeometry( 0.25, 16, 8 );
+    plight.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xff0040 } ) ) );
+    plight.position.set(x,y,z);
+    scene.add(plight);
+}
+
+function createSpotlights() {
+    for (var angle = 0; angle < 2*Math.PI; angle += Math.PI / 3) {
+        addSpotlight(33*Math.cos(angle), 5, 33*Math.sin(angle));
+    }
+}
+
 function createScene() {
     'use strict';
 
@@ -635,6 +650,7 @@ function init() {
     ortho_camera = createOrthoCamera();
     static_camera = createStaticCamera();
     camera = ortho_camera;
+    createSpotlights();
 
     window.addEventListener("resize", onResize);
     window.addEventListener("keydown", onKeyDown);
