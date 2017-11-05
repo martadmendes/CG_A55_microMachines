@@ -1,7 +1,8 @@
 var camera, ortho_camera, static_camera, car_camera;
 var scene, renderer;
 var car;
-var torus_array, butter_array, orange_array;
+var torus_array, butter_array, orange_array, plight_array;
+var plight_flag = true;
 var butter_num = 5;
 var orange_num = 3;
 var speed = 1;
@@ -281,13 +282,32 @@ function addSpotlight(x,y,z) {
     var sphere = new THREE.SphereGeometry( 0.25, 16, 8 );
     plight.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xff0040 } ) ) );
     plight.position.set(x,y,z);
+    plight_array.push(plight);
     scene.add(plight);
 }
 
 function createSpotlights() {
-    for (var angle = 0; angle < 2*Math.PI; angle += Math.PI / 3) {
+    plight_array = new Array(0);
+    for (var angle = 0; angle < 2*Math.PI; angle += Math.PI / 3)
         addSpotlight(33*Math.cos(angle), 5, 33*Math.sin(angle));
+}
+
+function removeSpotlights() {
+    var plight, length;
+    var length = plight_array.length;
+    for (length; length > 0; length--) {
+        plight = plight_array[0];
+        scene.remove(plight);
+        plight_array.splice(0,1);
     }
+}
+
+function toggleSpotlight() {
+    if (plight_flag && plight_array.length == 0) {
+        createSpotlights();
+    } else if (!plight_flag && plight_array.length > 0) {
+        removeSpotlights();
+    } 
 }
 
 function createScene() {
@@ -314,6 +334,7 @@ function animate() {
     animateCar(acceleration, delta);
     animateTorus(acceleration, delta);
     animateOrange(delta);
+    toggleSpotlight();
 
     render();
     requestAnimationFrame(animate);
@@ -574,6 +595,12 @@ function onKeyDown(key) {
             }
         });
         break;
+
+    case 71: //G
+    case 103: //g
+        plight_flag = !plight_flag;
+        break;
+
     case 37: //left
         car.userData.right = false;
         car.userData.left = true;
