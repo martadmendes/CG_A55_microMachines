@@ -137,6 +137,77 @@ function addCar(obj, x, y, z) {
   var geometry = new THREE.CubeGeometry(5, 4, 3.5);
   var mesh = new THREE.Mesh(geometry, material);
 
+  var material = new THREE.MeshPhongMaterial({color: 0x5E1111});
+  var geometry = new THREE.Geometry();
+
+  //addBody
+  geometry.vertices.push(new THREE.Vector3(1.5,1.25,1.5));    //0
+  geometry.vertices.push(new THREE.Vector3(1.5,1.25,-1.5));   //1
+  geometry.vertices.push(new THREE.Vector3(-1.5,1.25,-1.5));  //2
+  geometry.vertices.push(new THREE.Vector3(-1.5,1.25,1.5));   //3
+  geometry.vertices.push(new THREE.Vector3(1.5,-1.25,1.5));   //4
+  geometry.vertices.push(new THREE.Vector3(1.5,-1.25,-1.5));  //5
+  geometry.vertices.push(new THREE.Vector3(-1.5,-1.25,-1.5)); //6
+  geometry.vertices.push(new THREE.Vector3(-1.5,-1.25,1.5));  //7
+  geometry.vertices.push(new THREE.Vector3(1.5,0,1.5));       //8
+  geometry.vertices.push(new THREE.Vector3(1.5,0,-1.5));      //9
+  geometry.vertices.push(new THREE.Vector3(3.5,-0.25,-1.5));  //10
+  geometry.vertices.push(new THREE.Vector3(3.5,-0.25,1.5));   //11
+  geometry.vertices.push(new THREE.Vector3(3.5,-1.25,1.5));   //12
+  geometry.vertices.push(new THREE.Vector3(3.5,-1.25,-1.5));  //13
+  geometry.vertices.push(new THREE.Vector3(0.75,2,0.75));     //14
+  geometry.vertices.push(new THREE.Vector3(0.75,2,-0.75));    //15
+  geometry.vertices.push(new THREE.Vector3(-0.75,2,-0.75));   //16
+  geometry.vertices.push(new THREE.Vector3(-0.75,2,0.75));    //17
+
+  geometry.faces.push(new THREE.Face3(1,6,2));//left back
+  geometry.faces.push(new THREE.Face3(1,5,6));
+
+  geometry.faces.push(new THREE.Face3(0,3,7));//right back
+  geometry.faces.push(new THREE.Face3(0,7,4));
+
+  geometry.faces.push(new THREE.Face3(0,8,9));//front up
+  geometry.faces.push(new THREE.Face3(0,9,1));
+
+  geometry.faces.push(new THREE.Face3(2,6,3));//back
+  geometry.faces.push(new THREE.Face3(3,6,7));
+
+  geometry.faces.push(new THREE.Face3(14,15,16));//up roof
+  geometry.faces.push(new THREE.Face3(14,16,17));
+
+  geometry.faces.push(new THREE.Face3(7,6,12));//down
+  geometry.faces.push(new THREE.Face3(6,13,12));
+
+  geometry.faces.push(new THREE.Face3(9,11,10));//up front
+
+  geometry.faces.push(new THREE.Face3(9,8,11));
+
+  geometry.faces.push(new THREE.Face3(10,11,12));//front down
+  geometry.faces.push(new THREE.Face3(10,12,13));
+
+  geometry.faces.push(new THREE.Face3(8,4,11));//right front
+  geometry.faces.push(new THREE.Face3(4,12,11));
+
+  geometry.faces.push(new THREE.Face3(10,13,9));//left front
+  geometry.faces.push(new THREE.Face3(9,13,5));
+
+  geometry.faces.push(new THREE.Face3(15,1,16));//left roof
+  geometry.faces.push(new THREE.Face3(1,2,16));
+
+  geometry.faces.push(new THREE.Face3(0,14,17));//right roof
+  geometry.faces.push(new THREE.Face3(0,17,3));
+
+  geometry.faces.push(new THREE.Face3(0,1,15));//front roof
+  geometry.faces.push(new THREE.Face3(0,15,14));
+
+  geometry.faces.push(new THREE.Face3(3,17,2));//back roof
+  geometry.faces.push(new THREE.Face3(2,17,16));
+
+  geometry.computeFaceNormals();
+  geometry.computeVertexNormals();
+
+  var mesh = new THREE.Mesh(geometry, material);
+
   mesh.position.set(x, y, z);
   obj.add(mesh);
 
@@ -238,13 +309,11 @@ function addOrange(x, y, z){
  */
 function createDirectionalLight(x, y, z) {
     "use strict";
-    var directional_light = new THREE.DirectionalLight(0xFFFAAD, 0.7);
+    var directional_light = new THREE.DirectionalLight(0xFFF55B, 0.5);
     directional_light.name = "Directional Light";
     directional_light.position.set(x, y, z);
 
     scene.add(directional_light);
-
-    return directional_light;
 }
 
 function addSpotlight(x,y,z) {
@@ -354,6 +423,7 @@ function createScene() {
 
     createTable(0, 0, 0);
     createCar(-32, 0, 0);
+    createDirectionalLight(0, 200, 0);
 }
 
 
@@ -677,16 +747,17 @@ function onKeyDown(key) {
 
     case 71: //G
     case 103: //g
-        scene.traverse(function(node){
-                if (node.material instanceof THREE.MeshLambertMaterial){
-                    node.naterial = new THREE.MeshPhongMaterial({color: node.material.color,
+        scene.traverse(function(node) {
+                if (node.material instanceof THREE.MeshLambertMaterial && !(node.name === "Bounding Sphere")) {
+                    node.material = new THREE.MeshPhongMaterial({color: node.material.color,
                                                                  wireframe: node.material.wireframe,
                                                                  shininess: 20,
                                                                  specular: node.material.color});
                     current_material = "Phong";
 
                 } else if (node.material instanceof THREE.MeshPhongMaterial
-                            || node.material instanceof THREE.MeshBasicMaterial) {
+                            || node.material instanceof THREE.MeshBasicMaterial
+                            && !(node.name === "Bounding Sphere")) {
                     node.material = new THREE.MeshLambertMaterial({color: node.material.color,
                                                                    wireframe: node.material.wireframe});
                     current_material = "Gouraud";
