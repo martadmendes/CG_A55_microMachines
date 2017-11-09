@@ -1,14 +1,23 @@
+/*
+ * global variables
+ */
+
 var camera, ortho_camera, static_camera, car_camera;
+var camera_height = 100;
+var camera_width = 160;
+
 var scene, renderer;
+const clock = new THREE.Clock();
+var speed = 1;
+
 var car;
 var torus_array, butter_array, orange_array, plight_array;
 var plight_flag = true;
 var butter_num = 5;
 var orange_num = 3;
-var speed = 1;
-var camera_height = 100;
-var camera_width = 160;
-const clock = new THREE.Clock();
+
+var current_material = "Basic";
+var previous_material = "Gouraud";
 
 
 /*
@@ -185,7 +194,15 @@ function addOrange(x, y, z){
                         speed: Math.random()*0.1 + 0.001,
                         timePassed: 0}
 	var geometry = new THREE.SphereGeometry(2, 20, 20);
-	var material = new THREE.MeshBasicMaterial( {color: 0xDE8520} );
+	var material
+    if (current_material === "Gouraud"){
+        material = new THREE.MeshLambertMaterial( {color: 0xDE8520} );
+    } else if (current_material === "Phong") {
+        material = new THREE.MeshPhongMaterial( {color: 0xDE8520} );
+    } else {
+        material = new THREE.MeshBasicMaterial( {color: 0xDE8520} );
+    }
+
 	var sphere = new THREE.Mesh( geometry, material );
     sphere.position.set(0,0,0);
     orange.add(sphere);
@@ -208,6 +225,54 @@ function addOrange(x, y, z){
 
     orange.position.set(x,y,z);
     scene.add(orange);
+}
+
+/*
+ * lighting
+ */
+function createDirectionalLight(x, y, z) {
+    "use strict";
+    var directional_light = new THREE.DirectionalLight(0xFFFAAD, 0.7);
+    directional_light.name = "Directional Light";
+    directional_light.position.set(x, y, z);
+
+    scene.add(directional_light);
+
+    return directional_light;
+}
+
+function addSpotlight(x,y,z) {
+    scene.add( new THREE.AmbientLight( 0x00020 ) );
+    var plight = new THREE.PointLight(0xFFB266, 0.3, 100, 2);
+    var sphere = new THREE.SphereGeometry( 0.25, 16, 8 );
+    plight.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xff0040 } ) ) );
+    plight.position.set(x,y,z);
+    plight_array.push(plight);
+    scene.add(plight);
+}
+
+function createSpotlights() {
+    plight_array = new Array(0);
+    for (var angle = 0; angle < 2*Math.PI; angle += Math.PI / 3)
+        addSpotlight(33*Math.cos(angle), 5, 33*Math.sin(angle));
+}
+
+function removeSpotlights() {
+    var plight, length;
+    var length = plight_array.length;
+    for (length; length > 0; length--) {
+        plight = plight_array[0];
+        scene.remove(plight);
+        plight_array.splice(0,1);
+    }
+}
+
+function toggleSpotlight() {
+    if (plight_flag && plight_array.length == 0) {
+        createSpotlights();
+    } else if (!plight_flag && plight_array.length > 0) {
+        removeSpotlights();
+    }
 }
 
 
@@ -274,40 +339,6 @@ function createCarCamera() {
     car_camera.position. z = 0;
     car_camera.lookAt(car.position);
     car.add(car_camera);
-}
-
-function addSpotlight(x,y,z) {
-    scene.add( new THREE.AmbientLight( 0x00020 ) );
-    var plight = new THREE.PointLight(0xFFB266, 0.3, 100, 2);
-    var sphere = new THREE.SphereGeometry( 0.25, 16, 8 );
-    plight.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xff0040 } ) ) );
-    plight.position.set(x,y,z);
-    plight_array.push(plight);
-    scene.add(plight);
-}
-
-function createSpotlights() {
-    plight_array = new Array(0);
-    for (var angle = 0; angle < 2*Math.PI; angle += Math.PI / 3)
-        addSpotlight(33*Math.cos(angle), 5, 33*Math.sin(angle));
-}
-
-function removeSpotlights() {
-    var plight, length;
-    var length = plight_array.length;
-    for (length; length > 0; length--) {
-        plight = plight_array[0];
-        scene.remove(plight);
-        plight_array.splice(0,1);
-    }
-}
-
-function toggleSpotlight() {
-    if (plight_flag && plight_array.length == 0) {
-        createSpotlights();
-    } else if (!plight_flag && plight_array.length > 0) {
-        removeSpotlights();
-    } 
 }
 
 function createScene() {
@@ -579,26 +610,15 @@ function onKeyDown(key) {
         camera = ortho_camera;
         onResize();
         break;
+
     case 50: // 2
         camera = static_camera;
         onResize();
         break;
+
     case 51: // 3
         camera = car_camera;
         onResize();
-        break;
-    case 65: // A
-    case 97: // a
-        scene.traverse(function (node) {
-            if (node instanceof THREE.Mesh) {
-                node.material.wireframe = !node.material.wireframe;
-            }
-        });
-        break;
-
-    case 67: //C
-    case 99: //c
-        plight_flag = !plight_flag;
         break;
 
     case 37: //left
@@ -632,7 +652,81 @@ function onKeyDown(key) {
             car.userData.stopping = false;
         }
         break;
+
+
+    case 65: // A
+    case 97: // a
+        scene.traverse(function (node) {
+            if (node instanceof THREE.Mesh) {
+                node.material.wireframe = !node.material.wireframe;
+            }
+        });
+        break;
+
+    case 67: //C
+    case 99: //c
+        plight_flag = !plight_flag;
+        break;
+
+
+    case 71: //G
+    case 103: //g
+        scene.traverse(function(node){
+                if (node.material instanceof THREE.MeshLambertMaterial){
+                    node.naterial = new THREE.MeshPhongMaterial({color: node.material.color,
+                                                                 wireframe: node.material.wireframe,
+                                                                 shininess: 20,
+                                                                 specular: node.material.color});
+                    current_material = "Phong";
+
+                } else if (node.material instanceof THREE.MeshPhongMaterial
+                            || node.material instanceof THREE.MeshBasicMaterial) {
+                    node.material = new THREE.MeshLambertMaterial({color: node.material.color,
+                                                                   wireframe: node.material.wireframe});
+                    current_material = "Gouraud";
+                }
+        });
+        break;
+
+
+    case 76:  // L
+    case 108: // l
+        scene.traverse(function (node) {
+            if (node.material instanceof THREE.MeshBasicMaterial && !(node.name === "Bounding Sphere")) {
+                if (previous_material === "Gouraud") {
+                    node.material = new THREE.MeshLambertMaterial({color: node.material.color,
+                                                                   wireframe: node.material.wireframe});
+                    current_material = "Gouraud";
+                }
+                else if (previous_material === "Phong") {
+                    node.material = new THREE.MeshPhongMaterial({color: node.material.color,
+                                                                 wireframe: node.material.wireframe,
+                                                                 shininess: 20,
+                                                                 specular: node.material.color});
+                    current_material = "Phong";
+                }
+            } else if (node.material instanceof THREE.MeshLambertMaterial && !(node.name === "Bounding Sphere")) {
+                previous_material = "Gouraud";
+                node.material = new THREE.MeshBasicMaterial({color: node.material.color,
+                                                             wireframe: node.material.wireframe});
+                current_material = "Basic";
+            } else if (node.material instanceof THREE.MeshPhongMaterial && !(node.name === "Bounding Sphere")) {
+                previous_material = "Phong";
+                node.material = new THREE.MeshBasicMaterial({color: node.material.color,
+                                                             wireframe: node.material.wireframe});
+                current_material = "Basic";
+            }
+        });
+        break;
+
+
+    case 78: //N
+    case 110: //n
+        var light = scene.getObjectByName("Directional Light");
+        light.visible = !light.visible;
+        break;
     }
+
 }
 
 
