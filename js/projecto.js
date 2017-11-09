@@ -209,7 +209,13 @@ function addOrange(x, y, z){
 
 
     geometry = new THREE.CylinderGeometry(0.2, 0.2, 1, 20);
-    material = new THREE.MeshBasicMaterial( {color: 0x663300} );
+    if (current_material === "Gouraud"){
+        material = new THREE.MeshLambertMaterial( {color: 0x663300} );
+    } else if (current_material === "Phong") {
+        material = new THREE.MeshPhongMaterial( {color: 0x663300} );
+    } else {
+        material = new THREE.MeshBasicMaterial( {color: 0x663300} );
+    }
     var mesh = new THREE.Mesh(geometry, material);
     mesh.position.set(0,2,0);
     orange.add(mesh);
