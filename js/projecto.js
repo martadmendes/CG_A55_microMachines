@@ -318,9 +318,9 @@ function createDirectionalLight(x, y, z) {
 
 function addSpotlight(x,y,z) {
     scene.add( new THREE.AmbientLight( 0x00020 ) );
-    var plight = new THREE.PointLight(0xFFB266, 0.3, 100, 2);
+    var plight = new THREE.PointLight(0xFFFF66, 0.3, 50, 3);
     var sphere = new THREE.SphereGeometry( 0.25, 16, 8 );
-    plight.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xff0040 } ) ) );
+    plight.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xFFFF66 } ) ) );
     plight.position.set(x,y,z);
     plight_array.push(plight);
     scene.add(plight);
