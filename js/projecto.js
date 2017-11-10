@@ -52,7 +52,7 @@ function createTable(x, y, z) {
 function addTableTop(obj, x, y, z) {
     'use strict';
 
-    var material = new THREE.MeshBasicMaterial({ color: 0x737070 });
+    var material = new THREE.MeshBasicMaterial({ color: 0x143614 });
     var geometry = new THREE.CubeGeometry(100, 20, 100);
     var mesh = new THREE.Mesh(geometry, material);
 
@@ -114,10 +114,11 @@ function createCar(x, y, z) {
                     stopping: false};
 
     addCar(car, 0, 2.5, 0);
-    addWheels(car, -2.5, 0, -1.75-0.5); //-2.5 - 0.5 pq e qd o carro acaba mais largura do toru
-    addWheels(car, -2.5, 0, 1.75+0.5);
-    addWheels(car, 2.5, 0, -1.75-0.5);
-    addWheels(car, 2.5, 0, 1.75+0.5);
+    addWheels(car, -2, 1.1, -1.5-0.5); //-2.5 - 0.5 pq e qd o carro acaba mais largura do toru
+    addWheels(car, -2, 1.1, 1.5+0.5);
+    addWheels(car, 2.25, 1.1, -1.5-0.5);
+    addWheels(car, 2.25, 1.1, 1.5+0.5);
+
 
     createCarCamera();
 
@@ -137,7 +138,7 @@ function addCar(obj, x, y, z) {
   var geometry = new THREE.CubeGeometry(5, 4, 3.5);
   var mesh = new THREE.Mesh(geometry, material);
 
-  var material = new THREE.MeshPhongMaterial({color: 0x5E1111});
+  var material = new THREE.MeshBasicMaterial({color: 0x5E1111});
   var geometry = new THREE.Geometry();
 
   //addBody
@@ -219,18 +220,66 @@ function addCar(obj, x, y, z) {
   obj.add(sphere);
 }
 
-
 function addWheels(obj, x , y , z){
-	'use strict';
+    'use strict';
+    
 
-	var material = new THREE.MeshBasicMaterial({ color: 0x6600ff });
-	var geometry = new THREE.TorusGeometry(1, 0.4, 15, 30);
-	var mesh = new THREE.Mesh(geometry, material);
+    var material = new THREE.MeshBasicMaterial({ color: 0x615F5F });
+    var geometry = new THREE.Geometry();
+    geometry.vertices.push(new THREE.Vector3(0,0,-0.2));//0
+    geometry.vertices.push(new THREE.Vector3(0,1,-0.2));//1
+    geometry.vertices.push(new THREE.Vector3(1,1,-0.2));//2
+    geometry.vertices.push(new THREE.Vector3(1.5,0,-0.2));//3
+    geometry.vertices.push(new THREE.Vector3(1,-1,-0.2));//4
+    geometry.vertices.push(new THREE.Vector3(0,-1,-0.2));//5
+    geometry.vertices.push(new THREE.Vector3(-0.5,0,-0.2));//6
+    geometry.vertices.push(new THREE.Vector3(0,0,0.2));//7
+    geometry.vertices.push(new THREE.Vector3(0,1,0.2));//8
+    geometry.vertices.push(new THREE.Vector3(1,1,0.2));//9
+    geometry.vertices.push(new THREE.Vector3(1.5,0,0.2));//10
+    geometry.vertices.push(new THREE.Vector3(1,-1,0.2));//11
+    geometry.vertices.push(new THREE.Vector3(0,-1,0.2));//12
+    geometry.vertices.push(new THREE.Vector3(-0.5,0,0.2));//13
+    //back
+    geometry.faces.push(new THREE.Face3(2,1,0));
+    geometry.faces.push(new THREE.Face3(1,6,0));
+    geometry.faces.push(new THREE.Face3(6,5,0));
+    geometry.faces.push(new THREE.Face3(5,4,0));
+    geometry.faces.push(new THREE.Face3(0,4,3));
+    geometry.faces.push(new THREE.Face3(2,0,3));
+    //front
+    geometry.faces.push(new THREE.Face3(8,9,7));
+    geometry.faces.push(new THREE.Face3(9,10,7));
+    geometry.faces.push(new THREE.Face3(7,10,11));
+    geometry.faces.push(new THREE.Face3(7,11,12));
+    geometry.faces.push(new THREE.Face3(7,12,13));
+    geometry.faces.push(new THREE.Face3(8,7,13));
+    //rectangles
+    geometry.faces.push(new THREE.Face3(8,1,6));
+    geometry.faces.push(new THREE.Face3(6,13,8)); //right up
+    
+    geometry.faces.push(new THREE.Face3(9,2,1));
+    geometry.faces.push(new THREE.Face3(1,8,9)); //up
+    
+    geometry.faces.push(new THREE.Face3(3,10,9));
+    geometry.faces.push(new THREE.Face3(9,2,3)); //left up
+    
+    geometry.faces.push(new THREE.Face3(11,10,3));
+    geometry.faces.push(new THREE.Face3(3,4,11)); //left down
 
+    geometry.faces.push(new THREE.Face3(11,4,5));
+    geometry.faces.push(new THREE.Face3(5,12,11)); //down
+    
+    geometry.faces.push(new THREE.Face3(13,6,12)); //right down
+    geometry.faces.push(new THREE.Face3(5,12,13));
+
+    geometry.computeFaceNormals();
+    geometry.computeVertexNormals();
+    var mesh = new THREE.Mesh(geometry, material);
+    
     mesh.position.set(x,y,z);
-	obj.add(mesh);
+    obj.add(mesh);
 }
-
 
 function addButter(x, y ,z){
 	'use strict';
