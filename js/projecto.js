@@ -360,7 +360,7 @@ function addOrange(x, y, z){
  */
 function createDirectionalLight(x, y, z) {
     "use strict";
-    var directional_light = new THREE.DirectionalLight(0xFFF55B, 0.5);
+    var directional_light = new THREE.DirectionalLight(0xFFF55B, 0.8);
     directional_light.name = "Directional Light";
     directional_light.position.set(x, y, z);
 
