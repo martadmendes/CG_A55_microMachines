@@ -12,10 +12,12 @@ var speed = 1;
 
 var car;
 var torus_array, butter_array, orange_array, plight_array;
-var plight_flag = true;
 var butter_num = 5;
 var orange_num = 3;
 
+var plight_flag = true;
+var light_calc_flag = false;
+var shader_flag = false;
 var current_material = "Basic";
 var previous_material = "Gouraud";
 
@@ -52,7 +54,7 @@ function createTable(x, y, z) {
 function addTableTop(obj, x, y, z) {
     'use strict';
 
-    var material = new THREE.MeshBasicMaterial({ color: 0x143614 });
+    var material = new THREE.MeshBasicMaterial({ color: 0x345539 });
     var geometry = new THREE.CubeGeometry(100, 20, 100);
     var mesh = new THREE.Mesh(geometry, material);
 
@@ -222,7 +224,7 @@ function addCar(obj, x, y, z) {
 
 function addWheels(obj, x , y , z){
     'use strict';
-    
+
 
     var material = new THREE.MeshBasicMaterial({ color: 0x615F5F });
     var geometry = new THREE.Geometry();
@@ -257,26 +259,26 @@ function addWheels(obj, x , y , z){
     //rectangles
     geometry.faces.push(new THREE.Face3(8,1,6));
     geometry.faces.push(new THREE.Face3(6,13,8)); //right up
-    
+
     geometry.faces.push(new THREE.Face3(9,2,1));
     geometry.faces.push(new THREE.Face3(1,8,9)); //up
-    
+
     geometry.faces.push(new THREE.Face3(3,10,9));
     geometry.faces.push(new THREE.Face3(9,2,3)); //left up
-    
+
     geometry.faces.push(new THREE.Face3(11,10,3));
     geometry.faces.push(new THREE.Face3(3,4,11)); //left down
 
     geometry.faces.push(new THREE.Face3(11,4,5));
     geometry.faces.push(new THREE.Face3(5,12,11)); //down
-    
+
     geometry.faces.push(new THREE.Face3(13,6,12)); //right down
     geometry.faces.push(new THREE.Face3(5,12,13));
 
     geometry.computeFaceNormals();
     geometry.computeVertexNormals();
     var mesh = new THREE.Mesh(geometry, material);
-    
+
     mesh.position.set(x,y,z);
     obj.add(mesh);
 }
@@ -399,6 +401,56 @@ function toggleSpotlight() {
     }
 }
 
+function toggleLightCalc() {
+    scene.traverse(function (node) {
+    if (node.material instanceof THREE.MeshBasicMaterial && !(node.name === "Bounding Sphere")) {
+        if (previous_material === "Gouraud") {
+            node.material = new THREE.MeshLambertMaterial({color: node.material.color,
+                                                           wireframe: node.material.wireframe});
+            current_material = "Gouraud";
+        }
+        else if (previous_material === "Phong") {
+            node.material = new THREE.MeshPhongMaterial({color: node.material.color,
+                                                         wireframe: node.material.wireframe,
+                                                         shininess: 20,
+                                                         specular: node.material.color});
+            current_material = "Phong";
+        }
+    } else if (node.material instanceof THREE.MeshLambertMaterial && !(node.name === "Bounding Sphere")) {
+        previous_material = "Gouraud";
+        node.material = new THREE.MeshBasicMaterial({color: node.material.color,
+                                                     wireframe: node.material.wireframe});
+        current_material = "Basic";
+    } else if (node.material instanceof THREE.MeshPhongMaterial && !(node.name === "Bounding Sphere")) {
+        previous_material = "Phong";
+        node.material = new THREE.MeshBasicMaterial({color: node.material.color,
+                                                     wireframe: node.material.wireframe});
+        current_material = "Basic";
+    }
+    light_calc_flag = false;
+    });
+}
+
+function switchShaders() {
+    scene.traverse(function (node) {
+        if (node.material instanceof THREE.MeshLambertMaterial && !(node.name === "Bounding Sphere")) {
+            node.material = new THREE.MeshPhongMaterial({color: node.material.color,
+                                                         wireframe: node.material.wireframe,
+                                                         shininess: 20,
+                                                         specular: node.material.color});
+            current_material = "Phong";
+
+        } else if (node.material instanceof THREE.MeshPhongMaterial
+                    || node.material instanceof THREE.MeshBasicMaterial
+                    && !(node.name === "Bounding Sphere")) {
+            node.material = new THREE.MeshLambertMaterial({color: node.material.color,
+                                                           wireframe: node.material.wireframe});
+            current_material = "Gouraud";
+        }
+        shader_flag = false;
+    });
+}
+
 
 /*
  * cameras
@@ -487,10 +539,19 @@ function animate() {
     var torus;
     const acceleration   = 0.5;
     const delta = clock.getDelta();
+
     animateCar(acceleration, delta);
     animateTorus(acceleration, delta);
     animateOrange(delta);
     toggleSpotlight();
+
+    if (shader_flag === true) {
+        switchShaders();
+    }
+
+    if (light_calc_flag === true) {
+        toggleLightCalc();
+    }
 
     render();
     requestAnimationFrame(animate);
@@ -796,53 +857,12 @@ function onKeyDown(key) {
 
     case 71: //G
     case 103: //g
-        scene.traverse(function(node) {
-                if (node.material instanceof THREE.MeshLambertMaterial && !(node.name === "Bounding Sphere")) {
-                    node.material = new THREE.MeshPhongMaterial({color: node.material.color,
-                                                                 wireframe: node.material.wireframe,
-                                                                 shininess: 20,
-                                                                 specular: node.material.color});
-                    current_material = "Phong";
-
-                } else if (node.material instanceof THREE.MeshPhongMaterial
-                            || node.material instanceof THREE.MeshBasicMaterial
-                            && !(node.name === "Bounding Sphere")) {
-                    node.material = new THREE.MeshLambertMaterial({color: node.material.color,
-                                                                   wireframe: node.material.wireframe});
-                    current_material = "Gouraud";
-                }
-        });
+        shader_flag = true;
         break;
-
 
     case 76:  // L
     case 108: // l
-        scene.traverse(function (node) {
-            if (node.material instanceof THREE.MeshBasicMaterial && !(node.name === "Bounding Sphere")) {
-                if (previous_material === "Gouraud") {
-                    node.material = new THREE.MeshLambertMaterial({color: node.material.color,
-                                                                   wireframe: node.material.wireframe});
-                    current_material = "Gouraud";
-                }
-                else if (previous_material === "Phong") {
-                    node.material = new THREE.MeshPhongMaterial({color: node.material.color,
-                                                                 wireframe: node.material.wireframe,
-                                                                 shininess: 20,
-                                                                 specular: node.material.color});
-                    current_material = "Phong";
-                }
-            } else if (node.material instanceof THREE.MeshLambertMaterial && !(node.name === "Bounding Sphere")) {
-                previous_material = "Gouraud";
-                node.material = new THREE.MeshBasicMaterial({color: node.material.color,
-                                                             wireframe: node.material.wireframe});
-                current_material = "Basic";
-            } else if (node.material instanceof THREE.MeshPhongMaterial && !(node.name === "Bounding Sphere")) {
-                previous_material = "Phong";
-                node.material = new THREE.MeshBasicMaterial({color: node.material.color,
-                                                             wireframe: node.material.wireframe});
-                current_material = "Basic";
-            }
-        });
+        light_calc_flag = true;
         break;
 
 
@@ -854,7 +874,6 @@ function onKeyDown(key) {
     }
 
 }
-
 
 function onKeyUp (key){
     'use strict';
