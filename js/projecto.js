@@ -15,7 +15,7 @@ var torus_array, butter_array, orange_array, plight_array;
 var butter_num = 5;
 var orange_num = 3;
 
-var plight_flag = true;
+var plight_flag = false;
 var light_calc_flag = false;
 var shader_flag = false;
 var current_material = "Basic";
@@ -218,7 +218,7 @@ function addCar(obj, x, y, z) {
   material = new THREE.MeshBasicMaterial( {visible: false} );
   var sphere  = new THREE.Mesh(new THREE.SphereGeometry(2.5, 20, 20), material);
   sphere.name = "Bounding Sphere";
-  sphere.position.set(x, y, z);
+  sphere.position.set(x+1, y, z);
   obj.add(sphere);
 }
 
@@ -368,8 +368,7 @@ function createDirectionalLight(x, y, z) {
 }
 
 function addSpotlight(x,y,z) {
-    scene.add( new THREE.AmbientLight( 0x00020 ) );
-    var plight = new THREE.PointLight(0xFFFF66, 0.3, 50, 3);
+    var plight = new THREE.PointLight(0xF0C420, 0.5, 100, 3);
     var sphere = new THREE.SphereGeometry( 0.25, 16, 8 );
     plight.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xFFFF66 } ) ) );
     plight.position.set(x,y,z);
@@ -383,22 +382,14 @@ function createSpotlights() {
         addSpotlight(33*Math.cos(angle), 5, 33*Math.sin(angle));
 }
 
-function removeSpotlights() {
+function toggleSpotlight() {
     var plight, length;
     var length = plight_array.length;
-    for (length; length > 0; length--) {
-        plight = plight_array[0];
-        scene.remove(plight);
-        plight_array.splice(0,1);
+    for (var i = 0; i < length; i++) {
+        plight = plight_array[i];
+        plight.visible = !plight.visible
     }
-}
-
-function toggleSpotlight() {
-    if (plight_flag && plight_array.length == 0) {
-        createSpotlights();
-    } else if (!plight_flag && plight_array.length > 0) {
-        removeSpotlights();
-    }
+    plight_flag = false;
 }
 
 function toggleLightCalc() {
@@ -543,7 +534,8 @@ function animate() {
     animateCar(acceleration, delta);
     animateTorus(acceleration, delta);
     animateOrange(delta);
-    toggleSpotlight();
+    if (plight_flag)
+        toggleSpotlight();
 
     if (shader_flag === true) {
         switchShaders();
@@ -851,9 +843,8 @@ function onKeyDown(key) {
 
     case 67: //C
     case 99: //c
-        plight_flag = !plight_flag;
+        plight_flag = true;
         break;
-
 
     case 71: //G
     case 103: //g
