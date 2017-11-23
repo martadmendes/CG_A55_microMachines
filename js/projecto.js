@@ -367,7 +367,7 @@ function createDirectionalLight(x, y, z) {
     scene.add(directional_light);
 }
 
-function addSpotlight(x,y,z) {
+function addPointlight(x,y,z) {
     var plight = new THREE.PointLight(0xF0C420, 0.5, 100, 3);
     var sphere = new THREE.SphereGeometry( 0.25, 16, 8 );
     plight.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xFFFF66 } ) ) );
@@ -376,13 +376,13 @@ function addSpotlight(x,y,z) {
     scene.add(plight);
 }
 
-function createSpotlights() {
+function createPointlights() {
     plight_array = new Array(0);
     for (var angle = 0; angle < 2*Math.PI; angle += Math.PI / 3)
-        addSpotlight(33*Math.cos(angle), 5, 33*Math.sin(angle));
+        addPointlight(33*Math.cos(angle), 5, 33*Math.sin(angle));
 }
 
-function toggleSpotlight() {
+function togglePointlight() {
     var plight, length;
     var length = plight_array.length;
     for (var i = 0; i < length; i++) {
@@ -535,7 +535,7 @@ function animate() {
     animateTorus(acceleration, delta);
     animateOrange(delta);
     if (plight_flag)
-        toggleSpotlight();
+        togglePointlight();
 
     if (shader_flag === true) {
         switchShaders();
@@ -907,7 +907,7 @@ function init() {
     ortho_camera = createOrthoCamera();
     static_camera = createStaticCamera();
     camera = ortho_camera;
-    createSpotlights();
+    createPointlights();
 
     window.addEventListener("resize", onResize);
     window.addEventListener("keydown", onKeyDown);
