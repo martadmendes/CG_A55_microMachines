@@ -22,7 +22,7 @@ var current_material = "Basic";
 var previous_material = "Gouraud";
 
 var game_paused = false;
-
+var game_ended = false;
 
 /*
  * scene creation
@@ -55,8 +55,8 @@ function createTable(x, y, z) {
 
 function addTableTop(obj, x, y, z) {
     'use strict';
-
-    var material = new THREE.MeshBasicMaterial({ color: 0x345539 });
+    var texture = new THREE.TextureLoader().load('textures/red-white-tablecloth.jpg');
+    var material = new THREE.MeshBasicMaterial( { map: texture } );
     var geometry = new THREE.CubeGeometry(100, 20, 100);
     var mesh = new THREE.Mesh(geometry, material);
 
@@ -115,7 +115,8 @@ function createCar(x, y, z) {
                     speed: 0,
                     left: false,
                     right: false,
-                    stopping: false};
+                    stopping: false,
+                    lives: 5};
 
     addCar(car, 0, 2.5, 0);
     addWheels(car, -2, 1.1, -1.5-0.5); //-2.5 - 0.5 pq e qd o carro acaba mais largura do toru
@@ -514,11 +515,11 @@ function addPlane(obj, plane_x, plane_y, pos_y) {
     'use strict';
 
     return function (texture) {
-        let material = new THREE.MeshBasicMaterial({wireframe: false,
+        var material = new THREE.MeshBasicMaterial({wireframe: false,
                                                     reflectivity: 0,
                                                     refractionRatio: 0,
                                                     map: texture});
-        let mesh = new THREE.Mesh(new THREE.PlaneGeometry(plane_x, plane_y), material);
+        var mesh = new THREE.Mesh(new THREE.PlaneGeometry(plane_x, plane_y), material);
         mesh.rotateX(-Math.PI / 2); // Make it orthogonal to Y.
         obj.add(mesh);
         obj.translateY(pos_y);
@@ -528,36 +529,48 @@ function addPlane(obj, plane_x, plane_y, pos_y) {
 function createPlanes () {
     'use strict';
 
-    const loader = new THREE.TextureLoader();
-    
+    var loader = new THREE.TextureLoader();
+
     // Pause plane.
-    let pause_plane = new THREE.Object3D();
+    var pause_plane = new THREE.Object3D();
     pause_plane.name = "pause_plane";
     pause_plane.visible = false;
     loader.load(
-        // URL
         "textures/game_paused.png",
-        // Function when resource is loaded
         addPlane(pause_plane, 80, 50, 20),
-        // Function called when download progresses
         function (xhr) { },
-        // Function called when download errors
         function (xhr) { console.log("Error loading texture."); }
     );
+
+    // Game over plane.
+    var gameover_plane = new THREE.Object3D();
+    gameover_plane.name = "gameover_plane";
+    gameover_plane.visible = false;
+    loader.load(
+        "textures/game_over.png",
+        addPlane(gameover_plane, 80, 50, 20),
+        function (xhr) { },
+        function (xhr) { console.log("Error loading texture."); })
+
     scene.add(pause_plane);
+    scene.add(gameover_plane);
 }
 
 function fixPlanesDirection(x, y, z, sx, sz) {
     'use strict';
-    
-    let plane = scene.getObjectByName("pause_plane");
-    plane.position.setX(camera.position.x - x);
-    plane.position.setY(camera.position.y - y);
-    plane.position.setZ(camera.position.z - z);
-    plane.scale.x = sx;
-    plane.scale.z = sz;
-    plane.lookAt(camera.position);
-    plane.rotateX(Math.PI / 2);
+
+    var planes = [scene.getObjectByName("pause_plane"),
+                  scene.getObjectByName("gameover_plane")];
+
+    for (var j = 0; j < planes.length; ++j) {
+        planes[j].position.setX(camera.position.x - x);
+        planes[j].position.setY(camera.position.y - y);
+        planes[j].position.setZ(camera.position.z - z);
+        planes[j].scale.x = sx;
+        planes[j].scale.z = sz;
+        planes[j].lookAt(camera.position);
+        planes[j].rotateX(Math.PI / 2);
+    }
 }
 
 function updatePlanes () {
@@ -576,10 +589,28 @@ function updatePlanes () {
     }
 }
 
+function endGame (end) {
+    "use strict";
+    game_ended = end;
+    updatePlanes();
+    scene.getObjectByName("gameover_plane").visible = game_ended;
+    if (!game_ended) {
+        init();
+    }
+}
+
+
 function createScene() {
     'use strict';
 
     scene = new THREE.Scene();
+
+    // 3 objects representing the lives positioned under game plane shhh.
+    scene.add(createCar(55, -100, -45, new THREE.Object3D()));
+    scene.add(createCar(65, -100, -45, new THREE.Object3D()));
+    scene.add(createCar(75, -100, -45, new THREE.Object3D()));
+    scene.add(createCar(85, -100, -45, new THREE.Object3D()));
+    scene.add(createCar(95, -100, -45, new THREE.Object3D()));
 
     createPlanes();
     createTable(0, 0, 0);
@@ -589,6 +620,7 @@ function createScene() {
     static_camera = createStaticCamera();
     camera = ortho_camera;
     createPointlights();
+
 }
 
 
@@ -599,7 +631,7 @@ function createScene() {
 function animate() {
     'use strict';
 
-    if (!game_paused) {
+    if (!game_paused && !game_ended) {
         var i;
         var torus;
         const acceleration   = 0.5;
@@ -795,6 +827,10 @@ function validPosition(obj) { //checks if obj collided with another object or th
                 obj.userData.speed = 0;
                 obj.rotation.y = Math.PI / 2;
                 obj.userData.direction = new THREE.Vector3(0, 0, 0);
+                obj.userData.lives--;
+                if (obj.userData.lives === 0) {
+                    endGame(true);
+                }
             }
 
         }
@@ -943,14 +979,22 @@ function onKeyDown(key) {
         light.visible = !light.visible;
         break;
 
+    case 82: // R
+    case 114: //r
+        if(game_ended) {
+          endGame(false);
+        }
+        break;
+
     case 83:  // S
     case 115: // s
-        game_paused = !game_paused;
-        updatePlanes();
-        scene.getObjectByName("pause_plane").visible = game_paused;
+        if(!game_ended) {
+          game_paused = !game_paused;
+          updatePlanes();
+          scene.getObjectByName("pause_plane").visible = game_paused;
+        }
         break;
     }
-
 }
 
 function onKeyUp (key){
