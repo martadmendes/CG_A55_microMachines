@@ -21,6 +21,8 @@ var shader_flag = false;
 var current_material = "Basic";
 var previous_material = "Gouraud";
 
+var game_paused = false;
+
 
 /*
  * scene creation
@@ -508,14 +510,85 @@ function createCarCamera() {
     car.add(car_camera);
 }
 
+function addPlane(obj, plane_x, plane_y, pos_y) {
+    'use strict';
+
+    return function (texture) {
+        let material = new THREE.MeshBasicMaterial({wireframe: false,
+                                                    reflectivity: 0,
+                                                    refractionRatio: 0,
+                                                    map: texture});
+        let mesh = new THREE.Mesh(new THREE.PlaneGeometry(plane_x, plane_y), material);
+        mesh.rotateX(-Math.PI / 2); // Make it orthogonal to Y.
+        obj.add(mesh);
+        obj.translateY(pos_y);
+    };
+}
+
+function createPlanes () {
+    'use strict';
+
+    const loader = new THREE.TextureLoader();
+    
+    // Pause plane.
+    let pause_plane = new THREE.Object3D();
+    pause_plane.name = "pause_plane";
+    pause_plane.visible = false;
+    loader.load(
+        // URL
+        "textures/game_paused.png",
+        // Function when resource is loaded
+        addPlane(pause_plane, 80, 50, 20),
+        // Function called when download progresses
+        function (xhr) { },
+        // Function called when download errors
+        function (xhr) { console.log("Error loading texture."); }
+    );
+    scene.add(pause_plane);
+}
+
+function fixPlanesDirection(x, y, z, sx, sz) {
+    'use strict';
+    
+    let plane = scene.getObjectByName("pause_plane");
+    plane.position.setX(camera.position.x - x);
+    plane.position.setY(camera.position.y - y);
+    plane.position.setZ(camera.position.z - z);
+    plane.scale.x = sx;
+    plane.scale.z = sz;
+    plane.lookAt(camera.position);
+    plane.rotateX(Math.PI / 2);
+}
+
+function updatePlanes () {
+    'use strict';
+
+    switch (camera) {
+    case ortho_camera:
+        fixPlanesDirection(0, 10, 0, 1, 1);
+        break;
+    case static_camera:
+        fixPlanesDirection(0, 40, 50, 0.5, 0.5);
+        break;
+    case car_camera:
+        fixPlanesDirection(0, 20, 20, 0.35, 0.35);
+        break;
+    }
+}
+
 function createScene() {
     'use strict';
 
     scene = new THREE.Scene();
 
+    createPlanes();
     createTable(0, 0, 0);
     createCar(-32, 0, 0);
     createDirectionalLight(0, 200, 0);
+    ortho_camera = createOrthoCamera();
+    static_camera = createStaticCamera();
+    camera = ortho_camera;
+    createPointlights();
 }
 
 
@@ -526,34 +599,35 @@ function createScene() {
 function animate() {
     'use strict';
 
-    var i;
-    var torus;
-    const acceleration   = 0.5;
-    const delta = clock.getDelta();
+    if (!game_paused) {
+        var i;
+        var torus;
+        const acceleration   = 0.5;
+        const delta = clock.getDelta();
 
-    animateCar(acceleration, delta);
-    animateTorus(acceleration, delta);
-    animateOrange(delta);
-    if (plight_flag)
-        togglePointlight();
+        animateCar(acceleration, delta);
+        animateTorus(acceleration, delta);
+        animateOrange(delta);
+        if (plight_flag)
+            togglePointlight();
 
-    if (shader_flag === true) {
-        switchShaders();
-    }
+        if (shader_flag === true) {
+            switchShaders();
+        }
 
-    if (light_calc_flag === true) {
-        toggleLightCalc();
+        if (light_calc_flag === true) {
+            toggleLightCalc();
+        }
+
     }
 
     render();
     requestAnimationFrame(animate);
-
     validPosition(car);
     for (i=0; i<torus_array.length; i++){
         torus = torus_array[i];
         validPosition(torus);
     }
-
 }
 
 
@@ -786,17 +860,23 @@ function onKeyDown(key) {
     switch(key.keyCode) {
     case 49: // 1
         camera = ortho_camera;
-        onResize();
+        if (game_paused) {
+            onResize();
+        }
         break;
 
     case 50: // 2
         camera = static_camera;
-        onResize();
+        if (game_paused) {
+            onResize();
+        }
         break;
 
     case 51: // 3
         camera = car_camera;
-        onResize();
+        if (game_paused) {
+            onResize();
+        }
         break;
 
     case 37: //left
@@ -862,6 +942,13 @@ function onKeyDown(key) {
         var light = scene.getObjectByName("Directional Light");
         light.visible = !light.visible;
         break;
+
+    case 83:  // S
+    case 115: // s
+        game_paused = !game_paused;
+        updatePlanes();
+        scene.getObjectByName("pause_plane").visible = game_paused;
+        break;
     }
 
 }
@@ -904,10 +991,6 @@ function init() {
     document.body.appendChild(renderer.domElement);
 
     createScene();
-    ortho_camera = createOrthoCamera();
-    static_camera = createStaticCamera();
-    camera = ortho_camera;
-    createPointlights();
 
     window.addEventListener("resize", onResize);
     window.addEventListener("keydown", onKeyDown);
