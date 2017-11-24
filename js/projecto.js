@@ -11,9 +11,10 @@ const clock = new THREE.Clock();
 var speed = 1;
 
 var car;
-var torus_array, butter_array, orange_array, plight_array;
+var torus_array, butter_array, orange_array, plight_array, lives_array;
 var butter_num = 5;
 var orange_num = 3;
+var lives_num = 5;
 
 var plight_flag = false;
 var light_calc_flag = false;
@@ -133,6 +134,28 @@ function createCar(x, y, z) {
     car.position.z = z;
 
     scene.add(car);
+}
+
+
+function createLives(x, y, z) {
+    'use strict';
+
+    var life = new THREE.Object3D();
+    life.name = "Life";
+
+    addCar(life, 0, 2.5, 0);
+    addWheels(life, -2, 1.1, -1.5-0.5); //-2.5 - 0.5 pq e qd o carro acaba mais largura do toru
+    addWheels(life, -2, 1.1, 1.5+0.5);
+    addWheels(life, 2.25, 1.1, -1.5-0.5);
+    addWheels(life, 2.25, 1.1, 1.5+0.5);
+
+    life.rotateY(Math.PI/2);
+    life.position.x = x;
+    life.position.y = y;
+    life.position.z = z;
+
+    scene.add(life);
+    return life;
 }
 
 
@@ -605,13 +628,6 @@ function createScene() {
 
     scene = new THREE.Scene();
 
-    // 3 objects representing the lives positioned under game plane shhh.
-    scene.add(createCar(55, -100, -45, new THREE.Object3D()));
-    scene.add(createCar(65, -100, -45, new THREE.Object3D()));
-    scene.add(createCar(75, -100, -45, new THREE.Object3D()));
-    scene.add(createCar(85, -100, -45, new THREE.Object3D()));
-    scene.add(createCar(95, -100, -45, new THREE.Object3D()));
-
     createPlanes();
     createTable(0, 0, 0);
     createCar(-32, 0, 0);
@@ -827,12 +843,15 @@ function validPosition(obj) { //checks if obj collided with another object or th
                 obj.userData.speed = 0;
                 obj.rotation.y = Math.PI / 2;
                 obj.userData.direction = new THREE.Vector3(0, 0, 0);
+
+                var life = lives_array[0];
+                scene.remove(life);
+                lives_array.splice(0,1);
                 obj.userData.lives--;
                 if (obj.userData.lives === 0) {
                     endGame(true);
                 }
             }
-
         }
         for (i=0; i<butter_array.length; i++) {
             butter = butter_array[i];
@@ -1035,6 +1054,15 @@ function init() {
     document.body.appendChild(renderer.domElement);
 
     createScene();
+
+    var i;
+    var x = 55;
+    var life;
+    lives_array = new Array(0);
+    for (i=0; i<lives_num; i++) {
+      life = createLives(x+(i*10), -100, -45);
+      lives_array.push(life);
+    }
 
     window.addEventListener("resize", onResize);
     window.addEventListener("keydown", onKeyDown);
