@@ -315,11 +315,12 @@ function addCarLight(obj, x,y,z){
     var spotLight = new THREE.SpotLight(0xFFFF66, 1, 4, Math.PI / 6, 0.7, 2);
     var sphere = new THREE.SphereGeometry( 0.25, 16, 8 );
     spotLight.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xFFFF66 } ) ) );
-    spotLight.target = new THREE.Object3D();
-    spotLight.target.position.set(50, 50, 50);
+    var target = new THREE.Object3D();
+    target.position.set(-32,5,5);
+    spotLight.target = target;
     spotLight.position.set(x, y, z);
-    obj.add(spotLight.target);
     obj.add(spotLight);
+    obj.add(target);
     scene.add(new THREE.SpotLightHelper(spotLight));
 }
 
@@ -650,7 +651,37 @@ function endGame (end) {
     scene.getObjectByName("gameover_plane").visible = game_ended;
     updatePlanes();
     if (!game_ended) {
-        init();
+        var i;
+        for (i = 0; i < orange_array.length; i++) {
+            var orange = orange_array[i];
+            scene.remove(orange);
+        }
+        orange_array = new Array(0);
+        for (i = 0; i < butter_array.length; i++) {
+            var butter = butter_array[i];
+            scene.remove(butter);
+        }
+        butter_array = new Array(0);
+        for (i = 0; i < torus_array.length; i++) {
+            var torus = torus_array[i];
+            scene.remove(torus);
+        }
+        torus_array = new Array(0);
+        lives_array = new Array(0);
+        for(i=0; i < butter_num; i++)
+            addButter((Math.random()*97)-48.5, 0.5, (Math.random()*98)-49);
+
+        for(i=0; i < orange_num; i++)
+            addOrange((Math.random()*98)-49, 2, (Math.random()*98)-49);
+
+        var x = 55;
+        for (i=0; i<lives_num; i++) {
+            var life = createLives(x+(i*10), -100, -45);
+            lives_array.push(life);
+        }
+        
+        createTrack();
+        car.userData.lives = lives_num;
     }
 }
 
@@ -1093,7 +1124,12 @@ function onKeyUp (key){
 function init() {
     'use strict';
 
-    console.log("beggining of init");
+    orange_array = null;
+    torus_array = null;
+    butter_array = null;
+    plight_array = null;
+    lives_array = null;
+    car = null;
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setClearColor(0x000000);
@@ -1127,7 +1163,6 @@ function init() {
     window.addEventListener("resize", onResize);
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("keyup", onKeyUp);
-    console.log("end of init");
 }
 
 /*
