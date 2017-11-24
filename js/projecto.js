@@ -822,6 +822,7 @@ function validPosition(obj) { //checks if obj collided with another object or th
         }
 
     } else if (obj.name === "Car") {
+        var life = lives_array[0];
         for (i=0; i<torus_array.length; i++) {
             torus = torus_array[i];
             if (checkCollision(obj, torus)){
@@ -843,8 +844,6 @@ function validPosition(obj) { //checks if obj collided with another object or th
                 obj.userData.speed = 0;
                 obj.rotation.y = Math.PI / 2;
                 obj.userData.direction = new THREE.Vector3(0, 0, 0);
-
-                var life = lives_array[0];
                 scene.remove(life);
                 lives_array.splice(0,1);
                 obj.userData.lives--;
@@ -863,8 +862,20 @@ function validPosition(obj) { //checks if obj collided with another object or th
                 }
             }
         }
-    }
 
+        if (obj.position.x >= 50 || obj.position.x <= -50 || obj.position.z >= 50 || obj.position.z <= -50) {
+            obj.position.set(-32, 0, 0);
+            obj.userData.speed = 0;
+            obj.rotation.y = Math.PI / 2;
+            obj.userData.direction = new THREE.Vector3(0, 0, 0);
+            scene.remove(life);
+            lives_array.splice(0,1);
+            obj.userData.lives--;
+            if (obj.userData.lives === 0) {
+                endGame(true);
+            }
+        }
+    }
 }
 
 
@@ -1001,7 +1012,9 @@ function onKeyDown(key) {
     case 82: // R
     case 114: //r
         if(game_ended) {
-          endGame(false);
+          game_ended = false;
+          scene.getObjectByName("gameover_plane").visible = game_ended;
+          init();
         }
         break;
 
