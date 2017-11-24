@@ -12,18 +12,18 @@ var speed = 1;
 
 var car;
 var torus_array, butter_array, orange_array, plight_array, lives_array;
-var butter_num = 5;
-var orange_num = 3;
-var lives_num = 5;
+var butter_num;
+var orange_num;
+var lives_num;
 
-var plight_flag = false;
-var light_calc_flag = false;
-var shader_flag = false;
-var current_material = "Basic";
-var previous_material = "Gouraud";
+var plight_flag;
+var light_calc_flag;
+var shader_flag;
+var current_material;
+var previous_material;
 
-var game_paused = false;
-var game_ended = false;
+var game_paused;
+var game_ended;
 
 /*
  * scene creation
@@ -47,6 +47,7 @@ function createTable(x, y, z) {
     for(i=0; i < orange_num; i++)
         addOrange((Math.random()*98)-49, 2, (Math.random()*98)-49);
 
+    table.name = "Table";
     scene.add(table);
     table.position.x = x;
     table.position.y = y;
@@ -124,7 +125,8 @@ function createCar(x, y, z) {
     addWheels(car, -2, 1.1, 1.5+0.5);
     addWheels(car, 2.25, 1.1, -1.5-0.5);
     addWheels(car, 2.25, 1.1, 1.5+0.5);
-
+    addCarLight(car, 3.5, 2, -1.25);
+    addCarLight(car, 3.5, 2, 1.25);
 
     createCarCamera();
 
@@ -309,6 +311,18 @@ function addWheels(obj, x , y , z){
     obj.add(mesh);
 }
 
+function addCarLight(obj, x,y,z){
+    var spotLight = new THREE.SpotLight(0xFFFF66, 1, 4, Math.PI / 6, 0.7, 2);
+    var sphere = new THREE.SphereGeometry( 0.25, 16, 8 );
+    spotLight.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xFFFF66 } ) ) );
+    spotLight.target = new THREE.Object3D();
+    spotLight.target.position.set(50, 50, 50);
+    spotLight.position.set(x, y, z);
+    obj.add(spotLight.target);
+    obj.add(spotLight);
+    scene.add(new THREE.SpotLightHelper(spotLight));
+}
+
 function addButter(x, y ,z){
 	'use strict';
 
@@ -420,31 +434,42 @@ function togglePointlight() {
 
 function toggleLightCalc() {
     scene.traverse(function (node) {
-    if (node.material instanceof THREE.MeshBasicMaterial && !(node.name === "Bounding Sphere")) {
-        if (previous_material === "Gouraud") {
-            node.material = new THREE.MeshLambertMaterial({color: node.material.color,
-                                                           wireframe: node.material.wireframe});
-            current_material = "Gouraud";
+        var texture;
+        if (node.name == "Table") {
+            console.log("Table has been found\n");
+            texture = new THREE.TextureLoader().load('textures/red-white-tablecloth.jpg');
+        } else {
+            texture = false;
         }
-        else if (previous_material === "Phong") {
-            node.material = new THREE.MeshPhongMaterial({color: node.material.color,
-                                                         wireframe: node.material.wireframe,
-                                                         shininess: 20,
-                                                         specular: node.material.color});
-            current_material = "Phong";
+        if (node.material instanceof THREE.MeshBasicMaterial && !(node.name === "Bounding Sphere")) {
+            if (previous_material === "Gouraud") {
+                node.material = new THREE.MeshLambertMaterial({color: node.material.color,
+                                                               map: texture,
+                                                               wireframe: node.material.wireframe});
+                current_material = "Gouraud";
+            }
+            else if (previous_material === "Phong") {
+                node.material = new THREE.MeshPhongMaterial({color: node.material.color,
+                                                             map: texture,
+                                                             wireframe: node.material.wireframe,
+                                                             shininess: 20,
+                                                             specular: node.material.color});
+                current_material = "Phong";
+            }
+        } else if (node.material instanceof THREE.MeshLambertMaterial && !(node.name === "Bounding Sphere")) {
+            previous_material = "Gouraud";
+            node.material = new THREE.MeshBasicMaterial({color: node.material.color,
+                                                         map: texture,
+                                                         wireframe: node.material.wireframe});
+            current_material = "Basic";
+        } else if (node.material instanceof THREE.MeshPhongMaterial && !(node.name === "Bounding Sphere")) {
+            previous_material = "Phong";
+            node.material = new THREE.MeshBasicMaterial({color: node.material.color,
+                                                         map: texture,
+                                                         wireframe: node.material.wireframe});
+            current_material = "Basic";
         }
-    } else if (node.material instanceof THREE.MeshLambertMaterial && !(node.name === "Bounding Sphere")) {
-        previous_material = "Gouraud";
-        node.material = new THREE.MeshBasicMaterial({color: node.material.color,
-                                                     wireframe: node.material.wireframe});
-        current_material = "Basic";
-    } else if (node.material instanceof THREE.MeshPhongMaterial && !(node.name === "Bounding Sphere")) {
-        previous_material = "Phong";
-        node.material = new THREE.MeshBasicMaterial({color: node.material.color,
-                                                     wireframe: node.material.wireframe});
-        current_material = "Basic";
-    }
-    light_calc_flag = false;
+        light_calc_flag = false;
     });
 }
 
@@ -579,11 +604,14 @@ function createPlanes () {
     scene.add(gameover_plane);
 }
 
-function fixPlanesDirection(x, y, z, sx, sz) {
-    'use strict';
+function fixPlanesDirection(x, y, z, sx, sz, f = false) {
 
     var planes = [scene.getObjectByName("pause_plane"),
                   scene.getObjectByName("gameover_plane")];
+
+    console.log("camera x: " + car_camera.position.x + " y: " + car_camera.position.y + " z: " + car_camera.position.z + "\n");
+    console.log("car x: " + car.position.x + " y: " + car.position.y + " z: " + car.position.z + "\n");
+    console.log("plane x: " + (camera.position.x - x) + " y: " + (camera.position.y - y) + " z: " + (camera.position.z - z) + "\n");
 
     for (var j = 0; j < planes.length; ++j) {
         planes[j].position.setX(camera.position.x - x);
@@ -591,7 +619,11 @@ function fixPlanesDirection(x, y, z, sx, sz) {
         planes[j].position.setZ(camera.position.z - z);
         planes[j].scale.x = sx;
         planes[j].scale.z = sz;
-        planes[j].lookAt(camera.position);
+        if (!f) {
+            planes[j].lookAt(camera.position);
+        } else {
+            planes[j].lookAt(new THREE.Vector3(car.position.x,car.position.y+5,car.position.z));
+        }
         planes[j].rotateX(Math.PI / 2);
     }
 }
@@ -601,13 +633,13 @@ function updatePlanes () {
 
     switch (camera) {
     case ortho_camera:
-        fixPlanesDirection(0, 10, 0, 1, 1);
+        fixPlanesDirection(0, 5, 0, 1, 1);
         break;
     case static_camera:
         fixPlanesDirection(0, 40, 50, 0.5, 0.5);
         break;
     case car_camera:
-        fixPlanesDirection(0, 20, 20, 0.35, 0.35);
+        fixPlanesDirection(-car.position.x + camera.position.x + 5, 5, -car.position.z, 0.35, 0.35, true);
         break;
     }
 }
@@ -615,8 +647,8 @@ function updatePlanes () {
 function endGame (end) {
     "use strict";
     game_ended = end;
-    updatePlanes();
     scene.getObjectByName("gameover_plane").visible = game_ended;
+    updatePlanes();
     if (!game_ended) {
         init();
     }
@@ -636,7 +668,6 @@ function createScene() {
     static_camera = createStaticCamera();
     camera = ortho_camera;
     createPointlights();
-
 }
 
 
@@ -926,21 +957,24 @@ function onKeyDown(key) {
     switch(key.keyCode) {
     case 49: // 1
         camera = ortho_camera;
-        if (game_paused) {
+        if (game_paused || game_ended) {
+            updatePlanes();
             onResize();
         }
         break;
 
     case 50: // 2
         camera = static_camera;
-        if (game_paused) {
+        if (game_paused || game_ended) {
+            updatePlanes();
             onResize();
         }
         break;
 
     case 51: // 3
         camera = car_camera;
-        if (game_paused) {
+        if (game_paused || game_ended) {
+            updatePlanes();
             onResize();
         }
         break;
@@ -1012,9 +1046,7 @@ function onKeyDown(key) {
     case 82: // R
     case 114: //r
         if(game_ended) {
-          game_ended = false;
-          scene.getObjectByName("gameover_plane").visible = game_ended;
-          init();
+            endGame(false);
         }
         break;
 
@@ -1061,10 +1093,25 @@ function onKeyUp (key){
 function init() {
     'use strict';
 
+    console.log("beggining of init");
     renderer = new THREE.WebGLRenderer({ antialias: true });
-
     renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setClearColor(0x000000);
+    renderer.autoClear = false;
     document.body.appendChild(renderer.domElement);
+
+    butter_num = 5;
+    orange_num = 3;
+    lives_num = 5;
+
+    plight_flag = false;
+    light_calc_flag = false;
+    shader_flag = false;
+    current_material = "Basic";
+    previous_material = "Gouraud";
+
+    game_paused = false;
+    game_ended = false;
 
     createScene();
 
@@ -1080,6 +1127,7 @@ function init() {
     window.addEventListener("resize", onResize);
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("keyup", onKeyUp);
+    console.log("end of init");
 }
 
 /*
